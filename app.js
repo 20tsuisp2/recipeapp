@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'customRecipes';
 const DELETED_KEY = 'deletedRecipeIds';
 const SHOPPING_KEY = 'shoppingList';
+const EDITED_KEY = 'recipeEdits';
 
 const starterRecipes = {
   quick: [
@@ -56,7 +57,7 @@ function recipeCardHTML(r, opts = {}) {
   return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
 }
 function emptyFormData() {
-  return { title: '', desc: '', prepTime: '', cookTime: '', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
+  return { title: '', desc: '', prepTime: '', prepUnit: 'min', cookTime: '', cookUnit: 'min', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
 }
 function resizeImage(file, callback) {
   const reader = new FileReader();
@@ -96,8 +97,16 @@ function deleteRecipeById(id) {
 function getAllRecipes(section) {
   const custom = getCustomRecipes();
   const deleted = getDeletedIds();
-  return [...starterRecipes[section], ...(custom[section] || [])].filter(r => !deleted.includes(r.id));
+  const edits = getRecipeEdits();
+  return [...starterRecipes[section], ...(custom[section] || [])]
+    .filter(r => !deleted.includes(r.id))
+    .map(r => edits[r.id] ? { ...r, ...edits[r.id] } : r);
 }
+function getRecipeEdits() {
+  const stored = localStorage.getItem(EDITED_KEY);
+  return stored ? JSON.parse(stored) : {};
+}
+function saveRecipeEdits(edits) { localStorage.setItem(EDITED_KEY, JSON.stringify(edits)); }
 function findRecipeById(id) {
   for (const section of Object.keys(sectionNames)) {
     const found = getAllRecipes(section).find(r => r.id === id);
@@ -276,7 +285,7 @@ function renderDetail(app) {
   const currentServings = Math.round(baseServings * state.multiplier);
 
   const timeRow = (recipe.prepTime || recipe.cookTime)
-    ? `<div class="detail-times">${recipe.prepTime ? `<span>Prep: ${recipe.prepTime} min</span>` : ''}${recipe.cookTime ? `<span>Cook: ${recipe.cookTime} min</span>` : ''}</div>` : '';
+    ? `<div class="detail-times">${recipe.prepTime ? `<span>Prep: ${recipe.prepTime} ${recipe.prepUnit || 'min'}</span>` : ''}${recipe.cookTime ? `<span>Cook: ${recipe.cookTime} ${recipe.cookUnit || 'min'}</span>` : ''}</div>` : '';
 
   const ingredientsHTML = (recipe.ingredients && recipe.ingredients.length)
     ? `<ul class="ingredient-list">${recipe.ingredients.map(ing => {
@@ -310,6 +319,7 @@ function renderDetail(app) {
     ${instructionsHTML}
     ${macrosHTML}
     ${notesHTML}
+    <button class="edit-btn">Edit recipe</button>
     <button class="delete-btn">Delete recipe</button>
   `;
 
@@ -330,6 +340,7 @@ function renderDetail(app) {
       render();
     }
   });
+  app.querySelector('.edit-btn').addEventListener('click', () => { openEditForm(recipe); });
   app.querySelector('.add-to-list-detail-btn').addEventListener('click', (e) => {
     const items = getShoppingList();
     (recipe.ingredients || []).forEach(ing => {
@@ -347,9 +358,41 @@ function renderDetail(app) {
 
 function openAddForm() {
   state.view = 'add';
+  state.editingId = null;
+  state.formSection = state.section;
   state.formData = emptyFormData();
   state.formIngredients = [{ amount: '', unit: '', name: '' }];
   state.formInstructions = [''];
+  render();
+}
+
+function openEditForm(recipe) {
+  let section = state.section;
+  for (const key of Object.keys(sectionNames)) {
+    if (getAllRecipes(key).some(r => r.id === recipe.id)) { section = key; break; }
+  }
+  state.view = 'add';
+  state.editingId = recipe.id;
+  state.formSection = section;
+  state.formData = {
+    title: recipe.title || '',
+    desc: recipe.desc || '',
+    prepTime: recipe.prepTime || '',
+    prepUnit: recipe.prepUnit || 'min',
+    cookTime: recipe.cookTime || '',
+    cookUnit: recipe.cookUnit || 'min',
+    servings: recipe.servings || '',
+    notes: recipe.notes || '',
+    calories: recipe.macros ? recipe.macros.calories : '',
+    protein: recipe.macros ? recipe.macros.protein : '',
+    carbs: recipe.macros ? recipe.macros.carbs : '',
+    fat: recipe.macros ? recipe.macros.fat : '',
+    photo: recipe.photo || null
+  };
+  state.formIngredients = (recipe.ingredients && recipe.ingredients.length)
+    ? recipe.ingredients.map(i => ({ amount: String(i.amount), unit: i.unit, name: i.name }))
+    : [{ amount: '', unit: '', name: '' }];
+  state.formInstructions = (recipe.instructions && recipe.instructions.length) ? [...recipe.instructions] : [''];
   render();
 }
 
@@ -377,7 +420,7 @@ function renderAddForm(app) {
 
   app.innerHTML = `
     <button class="back-btn">&larr; Cancel</button>
-    <h2 class="detail-title">Add Recipe</h2>
+    <h2 class="detail-title">${state.editingId ? 'Edit Recipe' : 'Add Recipe'}</h2>
 
     <label class="form-label">Photo</label>
     ${photoPreview}
@@ -390,11 +433,26 @@ function renderAddForm(app) {
     <label class="form-label">Short description</label>
     <input type="text" id="f-desc" placeholder="Shown in the recipe list" value="${escapeAttr(state.formData.desc)}">
 
-    <div class="form-row-3">
-      <div><label class="form-label">Prep (min)</label><input type="number" id="f-prep" value="${escapeAttr(state.formData.prepTime)}"></div>
-      <div><label class="form-label">Cook (min)</label><input type="number" id="f-cook" value="${escapeAttr(state.formData.cookTime)}"></div>
-      <div><label class="form-label">Servings</label><input type="number" id="f-servings" value="${escapeAttr(state.formData.servings)}"></div>
+    <label class="form-label">Prep time</label>
+    <div class="time-input-row">
+      <input type="number" id="f-prep" placeholder="0" value="${escapeAttr(state.formData.prepTime)}">
+      <select id="f-prep-unit">
+        <option value="min" ${state.formData.prepUnit === 'min' ? 'selected' : ''}>min</option>
+        <option value="hr" ${state.formData.prepUnit === 'hr' ? 'selected' : ''}>hr</option>
+      </select>
     </div>
+
+    <label class="form-label">Cook time</label>
+    <div class="time-input-row">
+      <input type="number" id="f-cook" placeholder="0" value="${escapeAttr(state.formData.cookTime)}">
+      <select id="f-cook-unit">
+        <option value="min" ${state.formData.cookUnit === 'min' ? 'selected' : ''}>min</option>
+        <option value="hr" ${state.formData.cookUnit === 'hr' ? 'selected' : ''}>hr</option>
+      </select>
+    </div>
+
+    <label class="form-label">Servings</label>
+    <input type="number" id="f-servings" value="${escapeAttr(state.formData.servings)}">
 
     <label class="form-label">Ingredients</label>
     <div id="ingredient-rows">${ingredientRows}</div>
@@ -415,16 +473,23 @@ function renderAddForm(app) {
     <label class="form-label">Notes</label>
     <textarea id="f-notes" placeholder="Serving suggestions, variations, etc.">${state.formData.notes}</textarea>
 
-    <button class="save-btn" id="save-recipe-btn" type="button">Save Recipe</button>
+    <button class="save-btn" id="save-recipe-btn" type="button">${state.editingId ? 'Save Changes' : 'Save Recipe'}</button>
   `;
 
-  app.querySelector('.back-btn').addEventListener('click', () => { state.view = 'list'; render(); });
+  app.querySelector('.back-btn').addEventListener('click', () => {
+    if (state.editingId) { state.view = 'detail'; state.openId = state.editingId; }
+    else { state.view = 'list'; }
+    state.editingId = null;
+    render();
+  });
 
   const fieldMap = { 'f-title': 'title', 'f-desc': 'desc', 'f-prep': 'prepTime', 'f-cook': 'cookTime', 'f-servings': 'servings', 'f-notes': 'notes', 'f-calories': 'calories', 'f-protein': 'protein', 'f-carbs': 'carbs', 'f-fat': 'fat' };
   Object.keys(fieldMap).forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('input', () => { state.formData[fieldMap[id]] = el.value; });
   });
+  document.getElementById('f-prep-unit').addEventListener('change', (e) => { state.formData.prepUnit = e.target.value; });
+  document.getElementById('f-cook-unit').addEventListener('change', (e) => { state.formData.cookUnit = e.target.value; });
 
   document.querySelectorAll('.ing-amount').forEach(el => el.addEventListener('input', () => { state.formIngredients[el.dataset.index].amount = el.value; }));
   document.querySelectorAll('.ing-unit').forEach(el => el.addEventListener('change', () => { state.formIngredients[el.dataset.index].unit = el.value; }));
@@ -471,22 +536,34 @@ function renderAddForm(app) {
       ? { calories: Number(state.formData.calories) || 0, protein: Number(state.formData.protein) || 0, carbs: Number(state.formData.carbs) || 0, fat: Number(state.formData.fat) || 0 }
       : null;
 
-    const newRecipe = {
-      id: 'custom-' + Date.now(),
+    const recipeData = {
       title: state.formData.title.trim(),
       desc: state.formData.desc.trim(),
       prepTime: Number(state.formData.prepTime) || 0,
+      prepUnit: state.formData.prepUnit,
       cookTime: Number(state.formData.cookTime) || 0,
+      cookUnit: state.formData.cookUnit,
       servings: Number(state.formData.servings) || 1,
       ingredients, instructions, macros,
       notes: state.formData.notes.trim(),
       photo: state.formData.photo
     };
 
-    const data = getCustomRecipes();
-    data[state.section].push(newRecipe);
-    saveCustomRecipes(data);
-    state.view = 'list';
+    if (state.editingId) {
+      const edits = getRecipeEdits();
+      edits[state.editingId] = recipeData;
+      saveRecipeEdits(edits);
+      state.view = 'detail';
+      state.openId = state.editingId;
+      state.editingId = null;
+    } else {
+      const newRecipe = { id: 'custom-' + Date.now(), ...recipeData };
+      const data = getCustomRecipes();
+      data[state.formSection].push(newRecipe);
+      saveCustomRecipes(data);
+      state.section = state.formSection;
+      state.view = 'list';
+    }
     render();
   });
 }

@@ -53,6 +53,9 @@ main > .section-label:first-of-type { margin-top: 0; }
 
 .notes { margin-top: 20px; padding: 14px 16px; background: white; border-radius: 10px; font-size: 13px; color: #555; font-style: italic; }
 
+.edit-btn { margin-top: 26px; width: 100%; background: none; border: 1px solid var(--green); color: var(--green); padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+.edit-btn + .delete-btn { margin-top: 10px; }
+
 .delete-btn { margin-top: 26px; width: 100%; background: none; border: 1px solid #c0524f; color: #c0524f; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
 
 .search-bar { margin-bottom: 18px; }
@@ -86,16 +89,18 @@ main > .section-label:first-of-type { margin-top: 0; }
 .card-thumb { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
 .detail-photo { width: 100%; border-radius: 10px; margin-bottom: 16px; object-fit: cover; max-height: 260px; }
 
-.form-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #777; margin: 18px 0 6px; }
+.form-label { display: block; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; color: #777; margin: 26px 0 8px; }
 .form-label:first-of-type { margin-top: 0; }
 
 #f-title, #f-desc, #f-prep, #f-cook, #f-servings, #f-notes,
 .ing-amount, .ing-unit, .ing-name, .instr-text,
-#f-calories, #f-protein, #f-carbs, #f-fat {
+#f-calories, #f-protein, #f-carbs, #f-fat, #f-prep-unit, #f-cook-unit {
   width: 100%; padding: 10px 12px; border: 1px solid var(--gold); border-radius: 8px;
   background: white; font-family: 'Inter', sans-serif; font-size: 14px; color: var(--green);
 }
 #f-notes, .instr-text { resize: vertical; min-height: 44px; }
+
+.time-input-row { display: grid; grid-template-columns: 1fr 90px; gap: 8px; }
 
 .form-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 .form-row-4 { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 8px; }
