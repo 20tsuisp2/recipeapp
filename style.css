@@ -54,3 +54,9 @@ main > .section-label:first-of-type { margin-top: 0; }
 .notes { margin-top: 20px; padding: 14px 16px; background: white; border-radius: 10px; font-size: 13px; color: #555; font-style: italic; }
 
 .delete-btn { margin-top: 26px; width: 100%; background: none; border: 1px solid #c0524f; color: #c0524f; padding: 12px; border-radius: 8px; font-size: 14px; font-weight: 600; cursor: pointer; }
+
+.search-bar { margin-bottom: 18px; }
+.search-bar input { width: 100%; padding: 12px 14px; border-radius: 8px; border: 1px solid var(--gold); background: white; font-size: 14px; font-family: 'Inter', sans-serif; color: var(--green); }
+.search-bar input::placeholder { color: #999; }
+
+.badge { display: inline-block; background: var(--cream); color: var(--green); font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.3px; padding: 3px 8px; border-radius: 4px; margin-bottom: 6px; }
