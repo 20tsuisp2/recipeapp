@@ -1,5 +1,6 @@
 const STORAGE_KEY = 'customRecipes';
 const DELETED_KEY = 'deletedRecipeIds';
+const SHOPPING_KEY = 'shoppingList';
 
 const starterRecipes = {
   quick: [
@@ -39,9 +40,15 @@ const starterRecipes = {
 };
 
 const sectionNames = { quick: 'Quick Meals', prep: 'Meal Prep', baking: 'Baking' };
-let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '' };
+const tabNames = { ...sectionNames, list: 'List' };
+let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [] };
 
 function escapeAttr(str) { return str.replace(/"/g, '&quot;'); }
+function tabsHTML() {
+  return Object.keys(tabNames).map(key =>
+    `<div class="tab ${key === state.section ? 'active' : ''}" data-section="${key}">${tabNames[key]}</div>`
+  ).join('');
+}
 
 function getCustomRecipes() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -79,14 +86,20 @@ function searchRecipes(query) {
   });
   return results;
 }
+function getShoppingList() {
+  const stored = localStorage.getItem(SHOPPING_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+function saveShoppingList(items) { localStorage.setItem(SHOPPING_KEY, JSON.stringify(items)); }
 
 function render() {
   const app = document.getElementById('app');
-  if (state.view === 'detail') renderDetail(app);
-  else renderList(app);
+  if (state.view === 'detail') { renderDetail(app); return; }
+  if (state.section === 'list') { renderShoppingList(app); return; }
+  renderRecipeTab(app);
 }
 
-function renderList(app) {
+function renderRecipeTab(app) {
   const searchBarHTML = `<div class="search-bar"><input id="search-input" type="search" placeholder="Search recipes..." value="${escapeAttr(state.query)}"></div>`;
   let bodyHTML;
 
@@ -97,13 +110,16 @@ function renderList(app) {
     ).join('');
     bodyHTML = `<div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
   } else {
-    const tabs = Object.keys(sectionNames).map(key =>
-      `<div class="tab ${key === state.section ? 'active' : ''}" data-section="${key}">${sectionNames[key]}</div>`
-    ).join('');
-    const cards = getAllRecipes(state.section).map(r =>
-      `<div class="recipe-card" data-id="${r.id}"><h3>${r.title}</h3><p>${r.desc || ''}</p></div>`
-    ).join('');
-    bodyHTML = `<div class="section-tabs">${tabs}</div><div id="cards">${cards || '<p class="empty">No recipes here yet.</p>'}</div>`;
+    const controlsHTML = `<div class="list-controls"><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
+    const recipes = getAllRecipes(state.section);
+    const cards = recipes.map(r => {
+      const selected = state.selected.includes(r.id);
+      const checkbox = state.selectMode ? `<span class="select-checkbox">${selected ? '✓' : ''}</span>` : '';
+      return `<div class="recipe-card ${state.selectMode ? 'select-mode' : ''} ${selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}<div class="card-body"><h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
+    }).join('');
+    const selectBarHTML = (state.selectMode && state.selected.length > 0)
+      ? `<div class="select-bar"><span>${state.selected.length} selected</span><button class="add-to-list-btn">Add to list</button></div>` : '';
+    bodyHTML = `<div class="section-tabs">${tabsHTML()}</div>${controlsHTML}<div id="cards">${cards || '<p class="empty">No recipes here yet.</p>'}</div>${selectBarHTML}`;
   }
 
   app.innerHTML = searchBarHTML + bodyHTML;
@@ -116,19 +132,112 @@ function renderList(app) {
     if (newInput) { newInput.focus(); newInput.setSelectionRange(newInput.value.length, newInput.value.length); }
   });
 
-  if (!state.query.trim()) {
-    document.querySelectorAll('.tab').forEach(tab => {
-      tab.addEventListener('click', () => { state.section = tab.dataset.section; render(); });
-    });
-  }
-  document.querySelectorAll('.recipe-card').forEach(card => {
-    card.addEventListener('click', () => {
-      state.openId = card.dataset.id;
-      state.view = 'detail';
-      state.multiplier = 1;
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      state.section = tab.dataset.section;
+      state.query = '';
+      state.selectMode = false;
+      state.selected = [];
       render();
     });
   });
+
+  const selectToggle = document.querySelector('.select-toggle');
+  if (selectToggle) {
+    selectToggle.addEventListener('click', () => {
+      state.selectMode = !state.selectMode;
+      state.selected = [];
+      render();
+    });
+  }
+
+  document.querySelectorAll('.recipe-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const id = card.dataset.id;
+      if (state.selectMode) {
+        const idx = state.selected.indexOf(id);
+        if (idx === -1) state.selected.push(id); else state.selected.splice(idx, 1);
+        render();
+      } else {
+        state.openId = id;
+        state.view = 'detail';
+        state.multiplier = 1;
+        render();
+      }
+    });
+  });
+
+  const addToListBtn = document.querySelector('.add-to-list-btn');
+  if (addToListBtn) {
+    addToListBtn.addEventListener('click', () => {
+      const recipes = getAllRecipes(state.section).filter(r => state.selected.includes(r.id));
+      const items = getShoppingList();
+      recipes.forEach(r => {
+        (r.ingredients || []).forEach(ing => {
+          items.push({ id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: `${ing.amount}${ing.unit} ${ing.name}`, checked: false });
+        });
+      });
+      saveShoppingList(items);
+      state.selectMode = false;
+      state.selected = [];
+      state.section = 'list';
+      render();
+    });
+  }
+}
+
+function renderShoppingList(app) {
+  const items = getShoppingList();
+  const itemsHTML = items.length ? items.map(item => `
+    <div class="list-item ${item.checked ? 'checked' : ''}" data-id="${item.id}">
+      <span class="list-check"></span>
+      <span class="list-text">${item.text}</span>
+      <span class="list-delete">&times;</span>
+    </div>`).join('') : '<p class="empty">Your list is empty. Select recipes on another tab and tap "Add to list", or use the + button to add an item.</p>';
+  const clearBtn = items.length ? '<button class="clear-list-btn">Clear list</button>' : '';
+
+  app.innerHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="shopping-list">${itemsHTML}</div>${clearBtn}`;
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      state.section = tab.dataset.section;
+      state.query = '';
+      render();
+    });
+  });
+  document.querySelectorAll('.list-check').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.list-item').dataset.id;
+      const items = getShoppingList();
+      const item = items.find(i => i.id === id);
+      if (item) { item.checked = !item.checked; saveShoppingList(items); render(); }
+    });
+  });
+  document.querySelectorAll('.list-text').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.list-item').dataset.id;
+      const items = getShoppingList();
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+      const updated = prompt('Edit item:', item.text);
+      if (updated !== null && updated.trim()) { item.text = updated.trim(); saveShoppingList(items); render(); }
+    });
+  });
+  document.querySelectorAll('.list-delete').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.list-item').dataset.id;
+      let items = getShoppingList();
+      items = items.filter(i => i.id !== id);
+      saveShoppingList(items);
+      render();
+    });
+  });
+  const clearListBtn = document.querySelector('.clear-list-btn');
+  if (clearListBtn) {
+    clearListBtn.addEventListener('click', () => {
+      if (confirm('Clear the whole list?')) { saveShoppingList([]); render(); }
+    });
+  }
 }
 
 function renderDetail(app) {
@@ -163,6 +272,7 @@ function renderDetail(app) {
     <h2 class="detail-title">${recipe.title}</h2>
     ${timeRow}
     <div class="servings-row"><span>Servings</span><div class="stepper"><button class="step-minus">-</button><span>${currentServings}</span><button class="step-plus">+</button></div></div>
+    <button class="add-to-list-detail-btn">+ Add to shopping list</button>
     <h4 class="section-label">Ingredients</h4>
     ${ingredientsHTML}
     <h4 class="section-label">Instructions</h4>
@@ -182,12 +292,25 @@ function renderDetail(app) {
     state.multiplier = (currentServings + 1) / baseServings;
     render();
   });
-  app.querySelector('.delete-btn').addEventListener('click', () => {
+    app.querySelector('.delete-btn').addEventListener('click', () => {
     if (confirm(`Delete "${recipe.title}"? This can't be undone.`)) {
       deleteRecipeById(recipe.id);
       state.view = 'list';
       render();
     }
+  });
+  app.querySelector('.add-to-list-detail-btn').addEventListener('click', (e) => {
+    const items = getShoppingList();
+    (recipe.ingredients || []).forEach(ing => {
+      const scaled = ing.amount * state.multiplier;
+      const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 10) / 10;
+      items.push({ id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: `${displayAmount}${ing.unit} ${ing.name}`, checked: false });
+    });
+    saveShoppingList(items);
+    const btn = e.target;
+    btn.textContent = 'Added ✓';
+    btn.disabled = true;
+    setTimeout(() => { btn.textContent = '+ Add to shopping list'; btn.disabled = false; }, 1500);
   });
 }
 
@@ -202,11 +325,23 @@ function addRecipe() {
   render();
 }
 
+function addShoppingItem() {
+  const text = prompt('Add item (e.g. "500g pasta"):');
+  if (!text) return;
+  const items = getShoppingList();
+  items.push({ id: 'item-' + Date.now(), text: text.trim(), checked: false });
+  saveShoppingList(items);
+  render();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   render();
   const btn = document.createElement('button');
   btn.className = 'add-btn';
   btn.textContent = '+';
-  btn.addEventListener('click', addRecipe);
+  btn.addEventListener('click', () => {
+    if (state.section === 'list') addShoppingItem();
+    else addRecipe();
+  });
   document.body.appendChild(btn);
 });
