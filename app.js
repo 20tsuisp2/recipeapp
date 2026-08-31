@@ -49,6 +49,35 @@ function tabsHTML() {
     `<div class="tab ${key === state.section ? 'active' : ''}" data-section="${key}">${tabNames[key]}</div>`
   ).join('');
 }
+function recipeCardHTML(r, opts = {}) {
+  const thumb = r.photo ? `<img src="${r.photo}" class="card-thumb">` : '';
+  const checkbox = opts.selectMode ? `<span class="select-checkbox">${opts.selected ? '✓' : ''}</span>` : '';
+  const badge = opts.badgeText ? `<span class="badge">${opts.badgeText}</span>` : '';
+  return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
+}
+function emptyFormData() {
+  return { title: '', desc: '', prepTime: '', cookTime: '', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
+}
+function resizeImage(file, callback) {
+  const reader = new FileReader();
+  reader.onload = (e) => {
+    const img = new Image();
+    img.onload = () => {
+      const maxDim = 800;
+      let width = img.width, height = img.height;
+      if (width > maxDim || height > maxDim) {
+        if (width > height) { height = Math.round(height * (maxDim / width)); width = maxDim; }
+        else { width = Math.round(width * (maxDim / height)); height = maxDim; }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width; canvas.height = height;
+      canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+      callback(canvas.toDataURL('image/jpeg', 0.7));
+    };
+    img.src = e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
 
 function getCustomRecipes() {
   const stored = localStorage.getItem(STORAGE_KEY);
@@ -94,7 +123,10 @@ function saveShoppingList(items) { localStorage.setItem(SHOPPING_KEY, JSON.strin
 
 function render() {
   const app = document.getElementById('app');
+  const addBtn = document.querySelector('.add-btn');
+  if (addBtn) addBtn.style.display = (state.view === 'list') ? '' : 'none';
   if (state.view === 'detail') { renderDetail(app); return; }
+  if (state.view === 'add') { renderAddForm(app); return; }
   if (state.section === 'list') { renderShoppingList(app); return; }
   renderRecipeTab(app);
 }
@@ -105,18 +137,14 @@ function renderRecipeTab(app) {
 
   if (state.query.trim()) {
     const results = searchRecipes(state.query);
-    const cards = results.map(r =>
-      `<div class="recipe-card" data-id="${r.id}"><span class="badge">${sectionNames[r.section]}</span><h3>${r.title}</h3><p>${r.desc || ''}</p></div>`
-    ).join('');
+    const cards = results.map(r => recipeCardHTML(r, { badgeText: sectionNames[r.section] })).join('');
     bodyHTML = `<div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
   } else {
     const controlsHTML = `<div class="list-controls"><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
     const recipes = getAllRecipes(state.section);
-    const cards = recipes.map(r => {
-      const selected = state.selected.includes(r.id);
-      const checkbox = state.selectMode ? `<span class="select-checkbox">${selected ? '✓' : ''}</span>` : '';
-      return `<div class="recipe-card ${state.selectMode ? 'select-mode' : ''} ${selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}<div class="card-body"><h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
-    }).join('');
+    const cards = recipes.map(r =>
+      recipeCardHTML(r, { selectMode: state.selectMode, selected: state.selected.includes(r.id) })
+    ).join('');
     const selectBarHTML = (state.selectMode && state.selected.length > 0)
       ? `<div class="select-bar"><span>${state.selected.length} selected</span><button class="add-to-list-btn">Add to list</button></div>` : '';
     bodyHTML = `<div class="section-tabs">${tabsHTML()}</div>${controlsHTML}<div id="cards">${cards || '<p class="empty">No recipes here yet.</p>'}</div>${selectBarHTML}`;
@@ -267,9 +295,12 @@ function renderDetail(app) {
 
   const notesHTML = recipe.notes ? `<div class="notes"><strong>Notes:</strong> ${recipe.notes}</div>` : '';
 
+  const photoHTML = recipe.photo ? `<img src="${recipe.photo}" class="detail-photo">` : '';
+
   app.innerHTML = `
     <button class="back-btn">&larr; Back</button>
     <h2 class="detail-title">${recipe.title}</h2>
+    ${photoHTML}
     ${timeRow}
     <div class="servings-row"><span>Servings</span><div class="stepper"><button class="step-minus">-</button><span>${currentServings}</span><button class="step-plus">+</button></div></div>
     <button class="add-to-list-detail-btn">+ Add to shopping list</button>
@@ -292,7 +323,7 @@ function renderDetail(app) {
     state.multiplier = (currentServings + 1) / baseServings;
     render();
   });
-    app.querySelector('.delete-btn').addEventListener('click', () => {
+  app.querySelector('.delete-btn').addEventListener('click', () => {
     if (confirm(`Delete "${recipe.title}"? This can't be undone.`)) {
       deleteRecipeById(recipe.id);
       state.view = 'list';
@@ -314,15 +345,150 @@ function renderDetail(app) {
   });
 }
 
-function addRecipe() {
-  const title = prompt('Recipe name:');
-  if (!title) return;
-  const desc = prompt('Short description (ingredients/method):') || '';
-  const data = getCustomRecipes();
-  const id = 'custom-' + Date.now();
-  data[state.section].push({ id, title, desc });
-  saveCustomRecipes(data);
+function openAddForm() {
+  state.view = 'add';
+  state.formData = emptyFormData();
+  state.formIngredients = [{ amount: '', unit: '', name: '' }];
+  state.formInstructions = [''];
   render();
+}
+
+function renderAddForm(app) {
+  const ingredientRows = state.formIngredients.map((ing, i) => `
+    <div class="form-ingredient-row">
+      <input type="text" class="ing-amount" data-index="${i}" placeholder="Amt" value="${escapeAttr(ing.amount)}">
+      <select class="ing-unit" data-index="${i}">
+        ${['', 'g', 'kg', 'ml', 'l', 'tsp', 'tbsp', 'cup', 'oz', 'lb'].map(u =>
+          `<option value="${u}" ${ing.unit === u ? 'selected' : ''}>${u === '' ? '–' : u}</option>`
+        ).join('')}
+      </select>
+      <input type="text" class="ing-name" data-index="${i}" placeholder="Ingredient" value="${escapeAttr(ing.name)}">
+      <span class="row-remove" data-type="ingredient" data-index="${i}">&times;</span>
+    </div>`).join('');
+
+  const instructionRows = state.formInstructions.map((step, i) => `
+    <div class="form-instruction-row">
+      <span class="step-num">${i + 1}.</span>
+      <textarea class="instr-text" data-index="${i}" placeholder="Describe this step...">${step}</textarea>
+      <span class="row-remove" data-type="instruction" data-index="${i}">&times;</span>
+    </div>`).join('');
+
+  const photoPreview = state.formData.photo ? `<img src="${state.formData.photo}" class="photo-preview">` : '';
+
+  app.innerHTML = `
+    <button class="back-btn">&larr; Cancel</button>
+    <h2 class="detail-title">Add Recipe</h2>
+
+    <label class="form-label">Photo</label>
+    ${photoPreview}
+    <input type="file" accept="image/*" id="photo-input" style="display:none">
+    <button class="secondary-btn" id="photo-btn" type="button">${state.formData.photo ? 'Change photo' : 'Add photo'}</button>
+
+    <label class="form-label">Title</label>
+    <input type="text" id="f-title" placeholder="Recipe name" value="${escapeAttr(state.formData.title)}">
+
+    <label class="form-label">Short description</label>
+    <input type="text" id="f-desc" placeholder="Shown in the recipe list" value="${escapeAttr(state.formData.desc)}">
+
+    <div class="form-row-3">
+      <div><label class="form-label">Prep (min)</label><input type="number" id="f-prep" value="${escapeAttr(state.formData.prepTime)}"></div>
+      <div><label class="form-label">Cook (min)</label><input type="number" id="f-cook" value="${escapeAttr(state.formData.cookTime)}"></div>
+      <div><label class="form-label">Servings</label><input type="number" id="f-servings" value="${escapeAttr(state.formData.servings)}"></div>
+    </div>
+
+    <label class="form-label">Ingredients</label>
+    <div id="ingredient-rows">${ingredientRows}</div>
+    <button class="add-row-btn" id="add-ingredient-btn" type="button">+ Add ingredient</button>
+
+    <label class="form-label">Instructions</label>
+    <div id="instruction-rows">${instructionRows}</div>
+    <button class="add-row-btn" id="add-instruction-btn" type="button">+ Add step</button>
+
+    <label class="form-label">Macros per serving (optional)</label>
+    <div class="form-row-4">
+      <input type="number" id="f-calories" placeholder="kcal" value="${escapeAttr(state.formData.calories)}">
+      <input type="number" id="f-protein" placeholder="protein g" value="${escapeAttr(state.formData.protein)}">
+      <input type="number" id="f-carbs" placeholder="carbs g" value="${escapeAttr(state.formData.carbs)}">
+      <input type="number" id="f-fat" placeholder="fat g" value="${escapeAttr(state.formData.fat)}">
+    </div>
+
+    <label class="form-label">Notes</label>
+    <textarea id="f-notes" placeholder="Serving suggestions, variations, etc.">${state.formData.notes}</textarea>
+
+    <button class="save-btn" id="save-recipe-btn" type="button">Save Recipe</button>
+  `;
+
+  app.querySelector('.back-btn').addEventListener('click', () => { state.view = 'list'; render(); });
+
+  const fieldMap = { 'f-title': 'title', 'f-desc': 'desc', 'f-prep': 'prepTime', 'f-cook': 'cookTime', 'f-servings': 'servings', 'f-notes': 'notes', 'f-calories': 'calories', 'f-protein': 'protein', 'f-carbs': 'carbs', 'f-fat': 'fat' };
+  Object.keys(fieldMap).forEach(id => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => { state.formData[fieldMap[id]] = el.value; });
+  });
+
+  document.querySelectorAll('.ing-amount').forEach(el => el.addEventListener('input', () => { state.formIngredients[el.dataset.index].amount = el.value; }));
+  document.querySelectorAll('.ing-unit').forEach(el => el.addEventListener('change', () => { state.formIngredients[el.dataset.index].unit = el.value; }));
+  document.querySelectorAll('.ing-name').forEach(el => el.addEventListener('input', () => { state.formIngredients[el.dataset.index].name = el.value; }));
+  document.querySelectorAll('.instr-text').forEach(el => el.addEventListener('input', () => { state.formInstructions[el.dataset.index] = el.value; }));
+
+  document.querySelectorAll('.row-remove').forEach(el => {
+    el.addEventListener('click', () => {
+      const idx = Number(el.dataset.index);
+      if (el.dataset.type === 'ingredient') {
+        state.formIngredients.splice(idx, 1);
+        if (state.formIngredients.length === 0) state.formIngredients.push({ amount: '', unit: '', name: '' });
+      } else {
+        state.formInstructions.splice(idx, 1);
+        if (state.formInstructions.length === 0) state.formInstructions.push('');
+      }
+      render();
+    });
+  });
+
+  document.getElementById('add-ingredient-btn').addEventListener('click', () => {
+    state.formIngredients.push({ amount: '', unit: '', name: '' });
+    render();
+  });
+  document.getElementById('add-instruction-btn').addEventListener('click', () => {
+    state.formInstructions.push('');
+    render();
+  });
+
+  document.getElementById('photo-btn').addEventListener('click', () => { document.getElementById('photo-input').click(); });
+  document.getElementById('photo-input').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    resizeImage(file, (dataUrl) => { state.formData.photo = dataUrl; render(); });
+  });
+
+  document.getElementById('save-recipe-btn').addEventListener('click', () => {
+    if (!state.formData.title.trim()) { alert('Give the recipe a title first.'); return; }
+    const ingredients = state.formIngredients
+      .filter(ing => ing.name.trim())
+      .map(ing => ({ name: ing.name.trim(), amount: parseFloat(ing.amount) || 0, unit: ing.unit }));
+    const instructions = state.formInstructions.map(s => s.trim()).filter(Boolean);
+    const macros = (state.formData.calories || state.formData.protein || state.formData.carbs || state.formData.fat)
+      ? { calories: Number(state.formData.calories) || 0, protein: Number(state.formData.protein) || 0, carbs: Number(state.formData.carbs) || 0, fat: Number(state.formData.fat) || 0 }
+      : null;
+
+    const newRecipe = {
+      id: 'custom-' + Date.now(),
+      title: state.formData.title.trim(),
+      desc: state.formData.desc.trim(),
+      prepTime: Number(state.formData.prepTime) || 0,
+      cookTime: Number(state.formData.cookTime) || 0,
+      servings: Number(state.formData.servings) || 1,
+      ingredients, instructions, macros,
+      notes: state.formData.notes.trim(),
+      photo: state.formData.photo
+    };
+
+    const data = getCustomRecipes();
+    data[state.section].push(newRecipe);
+    saveCustomRecipes(data);
+    state.view = 'list';
+    render();
+  });
 }
 
 function addShoppingItem() {
@@ -341,7 +507,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btn.textContent = '+';
   btn.addEventListener('click', () => {
     if (state.section === 'list') addShoppingItem();
-    else addRecipe();
+    else openAddForm();
   });
   document.body.appendChild(btn);
 });
