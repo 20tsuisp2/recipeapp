@@ -5,35 +5,35 @@ const EDITED_KEY = 'recipeEdits';
 
 const starterRecipes = {
   quick: [
-    { id: 'q1', title: 'Chicken Parmesan', desc: 'Breaded chicken, tomato sauce, melted mozzarella.', prepTime: 15, cookTime: 25, servings: 2,
+    { id: 'q1', title: 'Chicken Parmesan', desc: 'Breaded chicken, tomato sauce, melted mozzarella.', prepHours: 0, prepMinutes: 15, cookHours: 0, cookMinutes: 25, servings: 2,
       ingredients: [{ name: 'chicken breasts', amount: 2, unit: '' },{ name: 'breadcrumbs', amount: 100, unit: 'g' },{ name: 'parmesan, grated', amount: 40, unit: 'g' },{ name: 'mozzarella', amount: 120, unit: 'g' },{ name: 'tomato sauce', amount: 250, unit: 'ml' },{ name: 'egg', amount: 1, unit: '' },{ name: 'olive oil', amount: 30, unit: 'ml' }],
       instructions: ['Preheat oven to 200°C.','Beat the egg in a shallow bowl. Coat each chicken breast in egg, then press into breadcrumbs.','Fry in olive oil over medium heat, 3-4 minutes per side until golden.','Transfer to a baking dish, top with tomato sauce and both cheeses.','Bake for 15 minutes until the cheese is bubbling and golden.'],
       macros: { calories: 620, protein: 48, carbs: 38, fat: 30 }, notes: 'Great with a side salad or spaghetti.' },
-    { id: 'q2', title: 'Zucchini Frittata', desc: 'Eggs, zucchini, cheese — pan to oven in 15 minutes.', prepTime: 10, cookTime: 15, servings: 2,
+    { id: 'q2', title: 'Zucchini Frittata', desc: 'Eggs, zucchini, cheese — pan to oven in 15 minutes.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 15, servings: 2,
       ingredients: [{ name: 'eggs', amount: 6, unit: '' },{ name: 'zucchini, sliced', amount: 200, unit: 'g' },{ name: 'parmesan, grated', amount: 30, unit: 'g' },{ name: 'olive oil', amount: 15, unit: 'ml' },{ name: 'salt', amount: 2, unit: 'g' }],
       instructions: ['Whisk the eggs with the parmesan and salt.','Heat oil in an oven-safe pan, cook zucchini for 5 minutes until soft.','Pour in the eggs, cook on low for 5 minutes until mostly set.','Finish under the grill for 3-4 minutes until golden on top.'],
       macros: { calories: 340, protein: 24, carbs: 6, fat: 24 }, notes: 'Good hot or cold, keeps well for lunch the next day.' },
-    { id: 'q3', title: 'Baked Salmon with Tomatoes & Zucchini', desc: 'One tray, 20 minutes, hard to overcook.', prepTime: 10, cookTime: 20, servings: 2,
+    { id: 'q3', title: 'Baked Salmon with Tomatoes & Zucchini', desc: 'One tray, 20 minutes, hard to overcook.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 20, servings: 2,
       ingredients: [{ name: 'salmon fillets', amount: 2, unit: '' },{ name: 'cherry tomatoes', amount: 200, unit: 'g' },{ name: 'zucchini, sliced', amount: 200, unit: 'g' },{ name: 'olive oil', amount: 20, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
       instructions: ['Preheat oven to 200°C.','Place salmon, tomatoes and zucchini on a tray. Drizzle with oil, scatter over crushed garlic.','Bake for 18-20 minutes until the salmon flakes easily.'],
       macros: { calories: 410, protein: 38, carbs: 9, fat: 25 }, notes: 'Serve with rice or crusty bread.' }
   ],
   prep: [
-    { id: 'p1', title: 'Beef Ragù', desc: 'Slow-simmered beef and tomato sauce, freezes well.', prepTime: 15, cookTime: 90, servings: 4,
+    { id: 'p1', title: 'Beef Ragù', desc: 'Slow-simmered beef and tomato sauce, freezes well.', prepHours: 0, prepMinutes: 15, cookHours: 1, cookMinutes: 30, servings: 4,
       ingredients: [{ name: 'beef mince', amount: 500, unit: 'g' },{ name: 'onion, diced', amount: 1, unit: '' },{ name: 'carrot, diced', amount: 1, unit: '' },{ name: 'celery stick, diced', amount: 1, unit: '' },{ name: 'tomato passata', amount: 700, unit: 'ml' },{ name: 'olive oil', amount: 20, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
       instructions: ['Heat oil in a large pot, soften onion, carrot and celery for 5 minutes.','Add beef mince, cook until browned.','Stir in garlic and passata, season.','Simmer on low for 1.5 hours, stirring occasionally.'],
       macros: { calories: 390, protein: 32, carbs: 14, fat: 22 }, notes: 'Freezes well in portions for up to 3 months.' },
-    { id: 'p2', title: 'Meatballs in Tomato Sauce', desc: 'Big batch, great over pasta or on its own.', prepTime: 20, cookTime: 30, servings: 4,
+    { id: 'p2', title: 'Meatballs in Tomato Sauce', desc: 'Big batch, great over pasta or on its own.', prepHours: 0, prepMinutes: 20, cookHours: 0, cookMinutes: 30, servings: 4,
       ingredients: [{ name: 'beef mince', amount: 500, unit: 'g' },{ name: 'breadcrumbs', amount: 50, unit: 'g' },{ name: 'egg', amount: 1, unit: '' },{ name: 'parmesan, grated', amount: 30, unit: 'g' },{ name: 'tomato passata', amount: 500, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
       instructions: ['Mix beef, breadcrumbs, egg and parmesan. Roll into balls.','Fry meatballs in a splash of oil until browned all over.','Add passata and garlic, cover and simmer for 20 minutes.'],
       macros: { calories: 410, protein: 34, carbs: 16, fat: 23 }, notes: 'Serve over pasta or with crusty bread.' }
   ],
   baking: [
-    { id: 'b1', title: 'Basic Pancakes', desc: 'Four ingredients, ready in 10 minutes.', prepTime: 5, cookTime: 10, servings: 2,
+    { id: 'b1', title: 'Basic Pancakes', desc: 'Four ingredients, ready in 10 minutes.', prepHours: 0, prepMinutes: 5, cookHours: 0, cookMinutes: 10, servings: 2,
       ingredients: [{ name: 'flour', amount: 120, unit: 'g' },{ name: 'milk', amount: 180, unit: 'ml' },{ name: 'egg', amount: 1, unit: '' },{ name: 'butter, melted', amount: 15, unit: 'g' }],
       instructions: ['Whisk flour, milk and egg into a smooth batter.','Stir in melted butter.','Cook spoonfuls in a hot non-stick pan, 2 minutes per side.'],
       macros: { calories: 320, protein: 12, carbs: 44, fat: 10 }, notes: 'Top with fruit or honey.' },
-    { id: 'b2', title: 'One-Bowl Vanilla Cake', desc: 'Mix, pour, bake — no mixer needed.', prepTime: 10, cookTime: 35, servings: 8,
+    { id: 'b2', title: 'One-Bowl Vanilla Cake', desc: 'Mix, pour, bake — no mixer needed.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 35, servings: 8,
       ingredients: [{ name: 'flour', amount: 250, unit: 'g' },{ name: 'sugar', amount: 200, unit: 'g' },{ name: 'butter, softened', amount: 150, unit: 'g' },{ name: 'eggs', amount: 3, unit: '' },{ name: 'milk', amount: 80, unit: 'ml' },{ name: 'baking powder', amount: 8, unit: 'g' },{ name: 'vanilla extract', amount: 5, unit: 'ml' }],
       instructions: ['Preheat oven to 180°C, grease a cake tin.','Beat butter and sugar until pale and fluffy.','Beat in eggs one at a time, then vanilla.','Fold in flour and baking powder, then milk.','Pour into the tin and bake for 30-35 minutes until a skewer comes out clean.'],
       macros: { calories: 310, protein: 5, carbs: 42, fat: 14 }, notes: 'Keeps for 3 days in an airtight container.' }
@@ -44,7 +44,15 @@ const sectionNames = { quick: 'Quick Meals', prep: 'Meal Prep', baking: 'Baking'
 const tabNames = { ...sectionNames, list: 'List' };
 let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [] };
 
-function escapeAttr(str) { return str.replace(/"/g, '&quot;'); }
+function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
+function formatDuration(hours, minutes) {
+  hours = Number(hours) || 0; minutes = Number(minutes) || 0;
+  if (!hours && !minutes) return null;
+  const parts = [];
+  if (hours) parts.push(`${hours} hr`);
+  if (minutes) parts.push(`${minutes} min`);
+  return parts.join(' ');
+}
 function tabsHTML() {
   return Object.keys(tabNames).map(key =>
     `<div class="tab ${key === state.section ? 'active' : ''}" data-section="${key}">${tabNames[key]}</div>`
@@ -57,7 +65,7 @@ function recipeCardHTML(r, opts = {}) {
   return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
 }
 function emptyFormData() {
-  return { title: '', desc: '', prepTime: '', prepUnit: 'min', cookTime: '', cookUnit: 'min', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
+  return { title: '', desc: '', prepHours: '', prepMinutes: '', cookHours: '', cookMinutes: '', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
 }
 function resizeImage(file, callback) {
   const reader = new FileReader();
@@ -284,8 +292,10 @@ function renderDetail(app) {
   const baseServings = recipe.servings || 1;
   const currentServings = Math.round(baseServings * state.multiplier);
 
-  const timeRow = (recipe.prepTime || recipe.cookTime)
-    ? `<div class="detail-times">${recipe.prepTime ? `<span>Prep: ${recipe.prepTime} ${recipe.prepUnit || 'min'}</span>` : ''}${recipe.cookTime ? `<span>Cook: ${recipe.cookTime} ${recipe.cookUnit || 'min'}</span>` : ''}</div>` : '';
+  const prepStr = formatDuration(recipe.prepHours, recipe.prepMinutes);
+  const cookStr = formatDuration(recipe.cookHours, recipe.cookMinutes);
+  const timeRow = (prepStr || cookStr)
+    ? `<div class="detail-times">${prepStr ? `<span>Prep: ${prepStr}</span>` : ''}${cookStr ? `<span>Cook: ${cookStr}</span>` : ''}</div>` : '';
 
   const ingredientsHTML = (recipe.ingredients && recipe.ingredients.length)
     ? `<ul class="ingredient-list">${recipe.ingredients.map(ing => {
@@ -377,10 +387,10 @@ function openEditForm(recipe) {
   state.formData = {
     title: recipe.title || '',
     desc: recipe.desc || '',
-    prepTime: recipe.prepTime || '',
-    prepUnit: recipe.prepUnit || 'min',
-    cookTime: recipe.cookTime || '',
-    cookUnit: recipe.cookUnit || 'min',
+    prepHours: recipe.prepHours || '',
+    prepMinutes: recipe.prepMinutes || '',
+    cookHours: recipe.cookHours || '',
+    cookMinutes: recipe.cookMinutes || '',
     servings: recipe.servings || '',
     notes: recipe.notes || '',
     calories: recipe.macros ? recipe.macros.calories : '',
@@ -434,21 +444,15 @@ function renderAddForm(app) {
     <input type="text" id="f-desc" placeholder="Shown in the recipe list" value="${escapeAttr(state.formData.desc)}">
 
     <label class="form-label">Prep time</label>
-    <div class="time-input-row">
-      <input type="number" id="f-prep" placeholder="0" value="${escapeAttr(state.formData.prepTime)}">
-      <select id="f-prep-unit">
-        <option value="min" ${state.formData.prepUnit === 'min' ? 'selected' : ''}>min</option>
-        <option value="hr" ${state.formData.prepUnit === 'hr' ? 'selected' : ''}>hr</option>
-      </select>
+    <div class="duration-row">
+      <input type="number" id="f-prep-hr" min="0" placeholder="0" value="${escapeAttr(state.formData.prepHours)}"><span class="duration-unit">hr</span>
+      <input type="number" id="f-prep-min" min="0" placeholder="0" value="${escapeAttr(state.formData.prepMinutes)}"><span class="duration-unit">min</span>
     </div>
 
     <label class="form-label">Cook time</label>
-    <div class="time-input-row">
-      <input type="number" id="f-cook" placeholder="0" value="${escapeAttr(state.formData.cookTime)}">
-      <select id="f-cook-unit">
-        <option value="min" ${state.formData.cookUnit === 'min' ? 'selected' : ''}>min</option>
-        <option value="hr" ${state.formData.cookUnit === 'hr' ? 'selected' : ''}>hr</option>
-      </select>
+    <div class="duration-row">
+      <input type="number" id="f-cook-hr" min="0" placeholder="0" value="${escapeAttr(state.formData.cookHours)}"><span class="duration-unit">hr</span>
+      <input type="number" id="f-cook-min" min="0" placeholder="0" value="${escapeAttr(state.formData.cookMinutes)}"><span class="duration-unit">min</span>
     </div>
 
     <label class="form-label">Servings</label>
@@ -483,13 +487,11 @@ function renderAddForm(app) {
     render();
   });
 
-  const fieldMap = { 'f-title': 'title', 'f-desc': 'desc', 'f-prep': 'prepTime', 'f-cook': 'cookTime', 'f-servings': 'servings', 'f-notes': 'notes', 'f-calories': 'calories', 'f-protein': 'protein', 'f-carbs': 'carbs', 'f-fat': 'fat' };
+  const fieldMap = { 'f-title': 'title', 'f-desc': 'desc', 'f-prep-hr': 'prepHours', 'f-prep-min': 'prepMinutes', 'f-cook-hr': 'cookHours', 'f-cook-min': 'cookMinutes', 'f-servings': 'servings', 'f-notes': 'notes', 'f-calories': 'calories', 'f-protein': 'protein', 'f-carbs': 'carbs', 'f-fat': 'fat' };
   Object.keys(fieldMap).forEach(id => {
     const el = document.getElementById(id);
     el.addEventListener('input', () => { state.formData[fieldMap[id]] = el.value; });
   });
-  document.getElementById('f-prep-unit').addEventListener('change', (e) => { state.formData.prepUnit = e.target.value; });
-  document.getElementById('f-cook-unit').addEventListener('change', (e) => { state.formData.cookUnit = e.target.value; });
 
   document.querySelectorAll('.ing-amount').forEach(el => el.addEventListener('input', () => { state.formIngredients[el.dataset.index].amount = el.value; }));
   document.querySelectorAll('.ing-unit').forEach(el => el.addEventListener('change', () => { state.formIngredients[el.dataset.index].unit = el.value; }));
@@ -539,10 +541,10 @@ function renderAddForm(app) {
     const recipeData = {
       title: state.formData.title.trim(),
       desc: state.formData.desc.trim(),
-      prepTime: Number(state.formData.prepTime) || 0,
-      prepUnit: state.formData.prepUnit,
-      cookTime: Number(state.formData.cookTime) || 0,
-      cookUnit: state.formData.cookUnit,
+      prepHours: Number(state.formData.prepHours) || 0,
+      prepMinutes: Number(state.formData.prepMinutes) || 0,
+      cookHours: Number(state.formData.cookHours) || 0,
+      cookMinutes: Number(state.formData.cookMinutes) || 0,
       servings: Number(state.formData.servings) || 1,
       ingredients, instructions, macros,
       notes: state.formData.notes.trim(),
