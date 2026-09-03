@@ -1,6 +1,7 @@
 const STORAGE_KEY = 'customRecipes';
 const DELETED_KEY = 'deletedRecipeIds';
 const SHOPPING_KEY = 'shoppingList';
+const FRIDGE_KEY = 'fridgeItems';
 const EDITED_KEY = 'recipeEdits';
 
 const starterRecipes = {
@@ -41,8 +42,8 @@ const starterRecipes = {
 };
 
 const sectionNames = { quick: 'Quick Meals', prep: 'Meal Prep', baking: 'Baking' };
-const tabNames = { ...sectionNames, list: 'List' };
-let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false };
+const tabNames = { ...sectionNames, fridge: 'Fridge', list: 'List' };
+let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null };
 let cookIntervalId = null;
 
 function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
@@ -234,6 +235,27 @@ function getShoppingList() {
   return stored ? JSON.parse(stored) : [];
 }
 function saveShoppingList(items) { localStorage.setItem(SHOPPING_KEY, JSON.stringify(items)); }
+function getFridgeItems() {
+  const stored = localStorage.getItem(FRIDGE_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+function saveFridgeItems(items) { localStorage.setItem(FRIDGE_KEY, JSON.stringify(items)); }
+function findMatchingRecipes(selectedTexts) {
+  const lowerSelected = selectedTexts.map(t => t.toLowerCase().trim()).filter(Boolean);
+  const results = [];
+  Object.keys(sectionNames).forEach(section => {
+    getAllRecipes(section).forEach(r => {
+      const ingredientNames = (r.ingredients || []).map(i => i.name.toLowerCase());
+      let matchCount = 0;
+      lowerSelected.forEach(sel => {
+        if (ingredientNames.some(name => name.includes(sel) || sel.includes(name))) matchCount++;
+      });
+      if (matchCount > 0) results.push({ ...r, section, matchCount, totalIngredients: ingredientNames.length });
+    });
+  });
+  results.sort((a, b) => b.matchCount - a.matchCount);
+  return results;
+}
 
 function render() {
   const app = document.getElementById('app');
@@ -245,6 +267,7 @@ function render() {
   if (state.view === 'paste') { renderPasteForm(app); return; }
   if (state.view === 'add') { renderAddForm(app); return; }
   if (state.section === 'list') { renderShoppingList(app); return; }
+  if (state.section === 'fridge') { renderFridgeTab(app); return; }
   renderRecipeTab(app);
 }
 
@@ -381,6 +404,95 @@ function renderShoppingList(app) {
   if (clearListBtn) {
     clearListBtn.addEventListener('click', () => {
       if (confirm('Clear the whole list?')) { saveShoppingList([]); render(); }
+    });
+  }
+}
+
+function addFridgeItem() {
+  const text = prompt('Add to your fridge list (e.g. "chicken breast"):');
+  if (!text || !text.trim()) return;
+  const items = getFridgeItems();
+  items.push({ id: 'fridge-' + Date.now(), text: text.trim(), checked: false });
+  saveFridgeItems(items);
+  render();
+}
+
+function renderFridgeTab(app) {
+  if (state.fridgeResults) {
+    const cards = state.fridgeResults
+      .map(r => recipeCardHTML(r, { badgeText: `${sectionNames[r.section]} · ${r.matchCount}/${r.totalIngredients} matched` }))
+      .join('');
+    app.innerHTML = `
+      <button class="back-btn" id="fridge-results-back">&larr; Back to Fridge</button>
+      <h2 class="detail-title">Best Matches</h2>
+      <div id="cards">${cards || '<p class="empty">No recipes match what you selected. Try selecting a few more items.</p>'}</div>
+    `;
+    document.getElementById('fridge-results-back').addEventListener('click', () => { state.fridgeResults = null; render(); });
+    document.querySelectorAll('.recipe-card').forEach(card => {
+      card.addEventListener('click', () => {
+        state.openId = card.dataset.id;
+        state.view = 'detail';
+        state.multiplier = 1;
+        render();
+      });
+    });
+    return;
+  }
+
+  const items = getFridgeItems();
+  const itemsHTML = items.length ? items.map(item => `
+    <div class="list-item ${item.checked ? 'checked' : ''}" data-id="${item.id}">
+      <span class="list-check"></span>
+      <span class="list-text">${item.text}</span>
+      <span class="list-delete">&times;</span>
+    </div>`).join('') : '<p class="empty">Add what\'s in your fridge, then select what you want to cook with.</p>';
+
+  const selectedCount = items.filter(i => i.checked).length;
+  const findBtn = selectedCount > 0 ? `<button class="find-recipes-btn">Find Recipes (${selectedCount} selected)</button>` : '';
+
+  app.innerHTML = `<div class="section-tabs">${tabsHTML()}</div><p class="fridge-subtitle">Tap items to select what you want to cook with.</p><div id="fridge-list">${itemsHTML}</div>${findBtn}`;
+
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      state.section = tab.dataset.section;
+      state.query = '';
+      state.fridgeResults = null;
+      render();
+    });
+  });
+  document.querySelectorAll('.list-check').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.list-item').dataset.id;
+      const list = getFridgeItems();
+      const item = list.find(i => i.id === id);
+      if (item) { item.checked = !item.checked; saveFridgeItems(list); render(); }
+    });
+  });
+  document.querySelectorAll('.list-text').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.list-item').dataset.id;
+      const list = getFridgeItems();
+      const item = list.find(i => i.id === id);
+      if (!item) return;
+      const updated = prompt('Edit item:', item.text);
+      if (updated !== null && updated.trim()) { item.text = updated.trim(); saveFridgeItems(list); render(); }
+    });
+  });
+  document.querySelectorAll('.list-delete').forEach(el => {
+    el.addEventListener('click', () => {
+      const id = el.closest('.list-item').dataset.id;
+      let list = getFridgeItems();
+      list = list.filter(i => i.id !== id);
+      saveFridgeItems(list);
+      render();
+    });
+  });
+  const findBtnEl = document.querySelector('.find-recipes-btn');
+  if (findBtnEl) {
+    findBtnEl.addEventListener('click', () => {
+      const selectedTexts = getFridgeItems().filter(i => i.checked).map(i => i.text);
+      state.fridgeResults = findMatchingRecipes(selectedTexts);
+      render();
     });
   }
 }
@@ -871,6 +983,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btn.textContent = '+';
   btn.addEventListener('click', () => {
     if (state.section === 'list') addShoppingItem();
+    else if (state.section === 'fridge') addFridgeItem();
     else openAddChoice();
   });
   document.body.appendChild(btn);

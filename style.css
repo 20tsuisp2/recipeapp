@@ -147,3 +147,6 @@ main > .section-label:first-of-type { margin-top: 0; }
 .choice-card span { font-size: 13px; color: #666; line-height: 1.4; }
 
 .paste-box { width: 100%; min-height: 140px; padding: 12px; border: 1px solid var(--gold); border-radius: 8px; background: white; font-family: 'Inter', sans-serif; font-size: 14px; color: var(--green); resize: vertical; }
+
+.fridge-subtitle { font-size: 13px; color: #666; margin-bottom: 14px; }
+.find-recipes-btn { display: block; width: 100%; background: var(--green); color: var(--cream); border: none; padding: 14px; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; margin-top: 16px; }
