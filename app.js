@@ -213,6 +213,24 @@ function getRecipeEdits() {
   return stored ? JSON.parse(stored) : {};
 }
 function saveRecipeEdits(edits) { localStorage.setItem(EDITED_KEY, JSON.stringify(edits)); }
+function exportRecipeData() {
+  const data = {
+    exportedAt: new Date().toISOString(),
+    customRecipes: getCustomRecipes(),
+    recipeEdits: getRecipeEdits(),
+    deletedRecipeIds: getDeletedIds()
+  };
+  const json = JSON.stringify(data, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `recipe-book-backup-${new Date().toISOString().slice(0, 10)}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
 function findRecipeById(id) {
   for (const section of Object.keys(sectionNames)) {
     const found = getAllRecipes(section).find(r => r.id === id);
@@ -280,7 +298,7 @@ function renderRecipeTab(app) {
     const cards = results.map(r => recipeCardHTML(r, { badgeText: sectionNames[r.section] })).join('');
     bodyHTML = `<div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
   } else {
-    const controlsHTML = `<div class="list-controls"><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
+    const controlsHTML = `<div class="list-controls"><button class="export-btn">Export</button><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
     const recipes = getAllRecipes(state.section);
     const cards = recipes.map(r =>
       recipeCardHTML(r, { selectMode: state.selectMode, selected: state.selected.includes(r.id) })
@@ -318,6 +336,8 @@ function renderRecipeTab(app) {
       render();
     });
   }
+  const exportBtn = document.querySelector('.export-btn');
+  if (exportBtn) exportBtn.addEventListener('click', () => exportRecipeData());
 
   document.querySelectorAll('.recipe-card').forEach(card => {
     card.addEventListener('click', () => {
