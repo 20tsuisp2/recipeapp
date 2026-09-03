@@ -72,6 +72,76 @@ function playTimerBeep() {
     });
   } catch (e) { /* audio not available, ignore */ }
 }
+
+const UNIT_WORD_MAP = {
+  g: 'g', gram: 'g', grams: 'g',
+  kg: 'kg', kilogram: 'kg', kilograms: 'kg',
+  ml: 'ml', milliliter: 'ml', milliliters: 'ml', millilitre: 'ml', millilitres: 'ml',
+  l: 'l', liter: 'l', liters: 'l', litre: 'l', litres: 'l',
+  tsp: 'tsp', teaspoon: 'tsp', teaspoons: 'tsp',
+  tbsp: 'tbsp', tablespoon: 'tbsp', tablespoons: 'tbsp',
+  cup: 'cup', cups: 'cup',
+  oz: 'oz', ounce: 'oz', ounces: 'oz',
+  lb: 'lb', lbs: 'lb', pound: 'lb', pounds: 'lb'
+};
+const UNICODE_FRACTIONS = { '¼': 0.25, '½': 0.5, '¾': 0.75, '⅓': 1 / 3, '⅔': 2 / 3, '⅛': 0.125, '⅜': 0.375, '⅝': 0.625, '⅞': 0.875 };
+
+function parseIngredientLine(rawLine) {
+  let line = rawLine.trim();
+  if (!line) return null;
+  line = line.replace(/^[-•*]\s*/, '');
+  let rest = line;
+  let amount = null;
+
+  const mixedMatch = rest.match(/^(\d+)\s+(\d+)\/(\d+)\s*/);
+  const unicodeFracMatch = rest.match(/^(\d*)([¼½¾⅓⅔⅛⅜⅝⅞])\s*/);
+  const simpleFracMatch = rest.match(/^(\d+)\/(\d+)\s*/);
+  const decimalMatch = rest.match(/^(\d+(?:\.\d+)?)\s*/);
+
+  if (mixedMatch) {
+    amount = Number(mixedMatch[1]) + Number(mixedMatch[2]) / Number(mixedMatch[3]);
+    rest = rest.slice(mixedMatch[0].length);
+  } else if (unicodeFracMatch && (unicodeFracMatch[1] || unicodeFracMatch[2])) {
+    amount = (unicodeFracMatch[1] ? Number(unicodeFracMatch[1]) : 0) + UNICODE_FRACTIONS[unicodeFracMatch[2]];
+    rest = rest.slice(unicodeFracMatch[0].length);
+  } else if (simpleFracMatch) {
+    amount = Number(simpleFracMatch[1]) / Number(simpleFracMatch[2]);
+    rest = rest.slice(simpleFracMatch[0].length);
+  } else if (decimalMatch) {
+    amount = Number(decimalMatch[1]);
+    rest = rest.slice(decimalMatch[0].length);
+  }
+
+  if (amount === null) return { amount: 1, unit: '', name: line };
+
+  rest = rest.trim();
+  let unit = '';
+  const unitMatch = rest.match(/^([a-zA-Z]+)\.?\s+/);
+  if (unitMatch && UNIT_WORD_MAP[unitMatch[1].toLowerCase()]) {
+    unit = UNIT_WORD_MAP[unitMatch[1].toLowerCase()];
+    rest = rest.slice(unitMatch[0].length);
+  }
+  rest = rest.replace(/^of\s+/i, '').trim();
+
+  return { amount: Math.round(amount * 100) / 100, unit, name: rest || line };
+}
+
+function parseIngredientsBlock(text) {
+  return text.split('\n').map(parseIngredientLine).filter(Boolean);
+}
+
+function parseInstructionsBlock(text) {
+  return text.split('\n')
+    .map(line => line.trim().replace(/^(?:step\s*)?\d+[.):]\s*/i, '').replace(/^[-•*]\s*/, ''))
+    .filter(Boolean)
+    .map(line => {
+      const timeMatch = line.match(/(\d+)(?:\s*[-–to]+\s*(\d+))?\s*(hour|hr|minute|min)s?\b/i);
+      if (!timeMatch) return line;
+      const high = timeMatch[2] ? Number(timeMatch[2]) : Number(timeMatch[1]);
+      const timerMinutes = timeMatch[3].toLowerCase().startsWith('h') ? high * 60 : high;
+      return { text: line, timerMinutes };
+    });
+}
 function formatDuration(hours, minutes) {
   hours = Number(hours) || 0; minutes = Number(minutes) || 0;
   if (!hours && !minutes) return null;
@@ -171,6 +241,8 @@ function render() {
   if (addBtn) addBtn.style.display = (state.view === 'list') ? '' : 'none';
   if (state.view === 'cook') { renderCookMode(app); return; }
   if (state.view === 'detail') { renderDetail(app); return; }
+  if (state.view === 'addChoice') { renderAddChoice(app); return; }
+  if (state.view === 'paste') { renderPasteForm(app); return; }
   if (state.view === 'add') { renderAddForm(app); return; }
   if (state.section === 'list') { renderShoppingList(app); return; }
   renderRecipeTab(app);
@@ -497,6 +569,77 @@ function renderCookMode(app) {
   if (resetBtn) resetBtn.addEventListener('click', () => { resetStepTimer(); render(); });
 }
 
+function openAddChoice() {
+  state.view = 'addChoice';
+  render();
+}
+
+function renderAddChoice(app) {
+  app.innerHTML = `
+    <button class="back-btn">&larr; Cancel</button>
+    <h2 class="detail-title">Add Recipe</h2>
+    <p class="choice-subtitle">How do you want to add it?</p>
+    <button class="choice-card" id="choice-full">
+      <strong>Add Full Recipe</strong>
+      <span>Fill in every detail yourself, step by step.</span>
+    </button>
+    <button class="choice-card" id="choice-paste">
+      <strong>Paste Recipe Details</strong>
+      <span>Paste the ingredients and instructions from somewhere else, and it gets sorted into place automatically.</span>
+    </button>
+  `;
+  app.querySelector('.back-btn').addEventListener('click', () => { state.view = 'list'; render(); });
+  document.getElementById('choice-full').addEventListener('click', () => openAddForm());
+  document.getElementById('choice-paste').addEventListener('click', () => openPasteForm());
+}
+
+function openPasteForm() {
+  state.view = 'paste';
+  state.pasteData = { title: '', ingredientsText: '', instructionsText: '' };
+  render();
+}
+
+function renderPasteForm(app) {
+  app.innerHTML = `
+    <button class="back-btn">&larr; Cancel</button>
+    <h2 class="detail-title">Paste Recipe Details</h2>
+
+    <label class="form-label">Title</label>
+    <input type="text" id="p-title" placeholder="Recipe name" value="${escapeAttr(state.pasteData.title)}">
+
+    <label class="form-label">Ingredients</label>
+    <textarea id="p-ingredients" class="paste-box" placeholder="Paste ingredients here, one per line, e.g.&#10;2 cups flour&#10;500g chicken breast&#10;1 tsp salt">${state.pasteData.ingredientsText}</textarea>
+
+    <label class="form-label">Instructions</label>
+    <textarea id="p-instructions" class="paste-box" placeholder="Paste instructions here, one step per line">${state.pasteData.instructionsText}</textarea>
+
+    <button class="save-btn" id="parse-continue-btn">Continue &rarr;</button>
+  `;
+
+  app.querySelector('.back-btn').addEventListener('click', () => { state.view = 'list'; render(); });
+  document.getElementById('p-title').addEventListener('input', (e) => { state.pasteData.title = e.target.value; });
+  document.getElementById('p-ingredients').addEventListener('input', (e) => { state.pasteData.ingredientsText = e.target.value; });
+  document.getElementById('p-instructions').addEventListener('input', (e) => { state.pasteData.instructionsText = e.target.value; });
+
+  document.getElementById('parse-continue-btn').addEventListener('click', () => {
+    const parsedIngredients = parseIngredientsBlock(state.pasteData.ingredientsText);
+    const parsedInstructions = parseInstructionsBlock(state.pasteData.instructionsText);
+
+    state.view = 'add';
+    state.editingId = null;
+    state.formSection = state.section;
+    state.formData = emptyFormData();
+    state.formData.title = state.pasteData.title;
+    state.formIngredients = parsedIngredients.length
+      ? parsedIngredients.map(i => ({ amount: String(i.amount), unit: i.unit, name: i.name }))
+      : [{ amount: '', unit: '', name: '' }];
+    state.formInstructions = parsedInstructions.length
+      ? parsedInstructions.map(s => { const d = getStepData(s); return { text: d.text, timerMinutes: d.timerMinutes ? String(d.timerMinutes) : '' }; })
+      : [{ text: '', timerMinutes: '' }];
+    render();
+  });
+}
+
 function openAddForm() {
   state.view = 'add';
   state.editingId = null;
@@ -728,7 +871,7 @@ document.addEventListener('DOMContentLoaded', () => {
   btn.textContent = '+';
   btn.addEventListener('click', () => {
     if (state.section === 'list') addShoppingItem();
-    else openAddForm();
+    else openAddChoice();
   });
   document.body.appendChild(btn);
 });
