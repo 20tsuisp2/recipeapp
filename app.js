@@ -11,21 +11,21 @@ const starterRecipes = {
       macros: { calories: 674, protein: 45, carbs: 38, fat: 38 }, notes: 'Best eaten fresh — the rice paper loses its crispness once it sits or is reheated.' },
     { id: 'q2', title: 'Zucchini Frittata', desc: 'Eggs, zucchini, cheese — pan to oven in 15 minutes.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 15, servings: 2,
       ingredients: [{ name: 'eggs', amount: 6, unit: '' },{ name: 'zucchini, sliced', amount: 200, unit: 'g' },{ name: 'parmesan, grated', amount: 30, unit: 'g' },{ name: 'olive oil', amount: 15, unit: 'ml' },{ name: 'salt', amount: 2, unit: 'g' }],
-      instructions: ['Whisk the eggs with the parmesan and salt.','Heat oil in an oven-safe pan, cook zucchini for 5 minutes until soft.','Pour in the eggs, cook on low for 5 minutes until mostly set.','Finish under the grill for 3-4 minutes until golden on top.'],
+      instructions: ['Whisk the eggs with the parmesan and salt.','Heat oil in an oven-safe pan, cook zucchini for 5 minutes until soft.','Pour in the eggs, cook on low for 5 minutes until mostly set.',{ text: 'Finish under the grill for 3-4 minutes until golden on top.', timerMinutes: 4 }],
       macros: { calories: 340, protein: 24, carbs: 6, fat: 24 }, notes: 'Good hot or cold, keeps well for lunch the next day.' },
     { id: 'q3', title: 'Baked Salmon with Tomatoes & Zucchini', desc: 'One tray, 20 minutes, hard to overcook.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 20, servings: 2,
       ingredients: [{ name: 'salmon fillets', amount: 2, unit: '' },{ name: 'cherry tomatoes', amount: 200, unit: 'g' },{ name: 'zucchini, sliced', amount: 200, unit: 'g' },{ name: 'olive oil', amount: 20, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
-      instructions: ['Preheat oven to 200°C.','Place salmon, tomatoes and zucchini on a tray. Drizzle with oil, scatter over crushed garlic.','Bake for 18-20 minutes until the salmon flakes easily.'],
+      instructions: ['Preheat oven to 200°C.','Place salmon, tomatoes and zucchini on a tray. Drizzle with oil, scatter over crushed garlic.',{ text: 'Bake for 18-20 minutes until the salmon flakes easily.', timerMinutes: 20 }],
       macros: { calories: 410, protein: 38, carbs: 9, fat: 25 }, notes: 'Serve with rice or crusty bread.' }
   ],
   prep: [
     { id: 'p1', title: 'Beef Ragù', desc: 'Slow-simmered beef and tomato sauce, freezes well.', prepHours: 0, prepMinutes: 15, cookHours: 1, cookMinutes: 30, servings: 4,
       ingredients: [{ name: 'beef mince', amount: 500, unit: 'g' },{ name: 'onion, diced', amount: 1, unit: '' },{ name: 'carrot, diced', amount: 1, unit: '' },{ name: 'celery stick, diced', amount: 1, unit: '' },{ name: 'tomato passata', amount: 700, unit: 'ml' },{ name: 'olive oil', amount: 20, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
-      instructions: ['Heat oil in a large pot, soften onion, carrot and celery for 5 minutes.','Add beef mince, cook until browned.','Stir in garlic and passata, season.','Simmer on low for 1.5 hours, stirring occasionally.'],
+      instructions: ['Heat oil in a large pot, soften onion, carrot and celery for 5 minutes.','Add beef mince, cook until browned.','Stir in garlic and passata, season.',{ text: 'Simmer on low for 1.5 hours, stirring occasionally.', timerMinutes: 90 }],
       macros: { calories: 390, protein: 32, carbs: 14, fat: 22 }, notes: 'Freezes well in portions for up to 3 months.' },
     { id: 'p2', title: 'Meatballs in Tomato Sauce', desc: 'Big batch, great over pasta or on its own.', prepHours: 0, prepMinutes: 20, cookHours: 0, cookMinutes: 30, servings: 4,
       ingredients: [{ name: 'beef mince', amount: 500, unit: 'g' },{ name: 'breadcrumbs', amount: 50, unit: 'g' },{ name: 'egg', amount: 1, unit: '' },{ name: 'parmesan, grated', amount: 30, unit: 'g' },{ name: 'tomato passata', amount: 500, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
-      instructions: ['Mix beef, breadcrumbs, egg and parmesan. Roll into balls.','Fry meatballs in a splash of oil until browned all over.','Add passata and garlic, cover and simmer for 20 minutes.'],
+      instructions: ['Mix beef, breadcrumbs, egg and parmesan. Roll into balls.','Fry meatballs in a splash of oil until browned all over.',{ text: 'Add passata and garlic, cover and simmer for 20 minutes.', timerMinutes: 20 }],
       macros: { calories: 410, protein: 34, carbs: 16, fat: 23 }, notes: 'Serve over pasta or with crusty bread.' }
   ],
   baking: [
@@ -35,16 +35,43 @@ const starterRecipes = {
       macros: { calories: 320, protein: 12, carbs: 44, fat: 10 }, notes: 'Top with fruit or honey.' },
     { id: 'b2', title: 'One-Bowl Vanilla Cake', desc: 'Mix, pour, bake — no mixer needed.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 35, servings: 8,
       ingredients: [{ name: 'flour', amount: 250, unit: 'g' },{ name: 'sugar', amount: 200, unit: 'g' },{ name: 'butter, softened', amount: 150, unit: 'g' },{ name: 'eggs', amount: 3, unit: '' },{ name: 'milk', amount: 80, unit: 'ml' },{ name: 'baking powder', amount: 8, unit: 'g' },{ name: 'vanilla extract', amount: 5, unit: 'ml' }],
-      instructions: ['Preheat oven to 180°C, grease a cake tin.','Beat butter and sugar until pale and fluffy.','Beat in eggs one at a time, then vanilla.','Fold in flour and baking powder, then milk.','Pour into the tin and bake for 30-35 minutes until a skewer comes out clean.'],
+      instructions: ['Preheat oven to 180°C, grease a cake tin.','Beat butter and sugar until pale and fluffy.','Beat in eggs one at a time, then vanilla.','Fold in flour and baking powder, then milk.',{ text: 'Pour into the tin and bake for 30-35 minutes until a skewer comes out clean.', timerMinutes: 35 }],
       macros: { calories: 310, protein: 5, carbs: 42, fat: 14 }, notes: 'Keeps for 3 days in an airtight container.' }
   ]
 };
 
 const sectionNames = { quick: 'Quick Meals', prep: 'Meal Prep', baking: 'Baking' };
 const tabNames = { ...sectionNames, list: 'List' };
-let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [] };
+let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false };
+let cookIntervalId = null;
 
 function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
+function getStepData(step) {
+  if (typeof step === 'string') return { text: step, timerMinutes: 0 };
+  return { text: step.text || '', timerMinutes: Number(step.timerMinutes) || 0 };
+}
+function formatCookTimer(totalSeconds) {
+  totalSeconds = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(totalSeconds / 3600);
+  const m = Math.floor((totalSeconds % 3600) / 60);
+  const s = totalSeconds % 60;
+  if (h > 0) return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+function playTimerBeep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.3, 0.6].forEach(delay => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.3, ctx.currentTime + delay);
+      osc.start(ctx.currentTime + delay);
+      osc.stop(ctx.currentTime + delay + 0.2);
+    });
+  } catch (e) { /* audio not available, ignore */ }
+}
 function formatDuration(hours, minutes) {
   hours = Number(hours) || 0; minutes = Number(minutes) || 0;
   if (!hours && !minutes) return null;
@@ -142,6 +169,7 @@ function render() {
   const app = document.getElementById('app');
   const addBtn = document.querySelector('.add-btn');
   if (addBtn) addBtn.style.display = (state.view === 'list') ? '' : 'none';
+  if (state.view === 'cook') { renderCookMode(app); return; }
   if (state.view === 'detail') { renderDetail(app); return; }
   if (state.view === 'add') { renderAddForm(app); return; }
   if (state.section === 'list') { renderShoppingList(app); return; }
@@ -306,7 +334,7 @@ function renderDetail(app) {
     : `<p class="empty">No ingredients added yet.</p>`;
 
   const instructionsHTML = (recipe.instructions && recipe.instructions.length)
-    ? `<ol class="instruction-list">${recipe.instructions.map(step => `<li>${step}</li>`).join('')}</ol>`
+    ? `<ol class="instruction-list">${recipe.instructions.map(step => `<li>${getStepData(step).text}</li>`).join('')}</ol>`
     : recipe.desc ? `<p>${recipe.desc}</p>` : `<p class="empty">No instructions added yet.</p>`;
 
   const macrosHTML = recipe.macros
@@ -316,10 +344,14 @@ function renderDetail(app) {
 
   const photoHTML = recipe.photo ? `<img src="${recipe.photo}" class="detail-photo">` : '';
 
+  const startCookingHTML = (recipe.instructions && recipe.instructions.length)
+    ? `<button class="start-cooking-btn">▶ Start Cooking</button>` : '';
+
   app.innerHTML = `
     <button class="back-btn">&larr; Back</button>
     <h2 class="detail-title">${recipe.title}</h2>
     ${photoHTML}
+    ${startCookingHTML}
     ${timeRow}
     <div class="servings-row"><span>Servings</span><div class="stepper"><button class="step-minus">-</button><span>${currentServings}</span><button class="step-plus">+</button></div></div>
     <button class="add-to-list-detail-btn">+ Add to shopping list</button>
@@ -351,6 +383,8 @@ function renderDetail(app) {
     }
   });
   app.querySelector('.edit-btn').addEventListener('click', () => { openEditForm(recipe); });
+  const startCookingBtn = app.querySelector('.start-cooking-btn');
+  if (startCookingBtn) startCookingBtn.addEventListener('click', () => { openCookMode(recipe); });
   app.querySelector('.add-to-list-detail-btn').addEventListener('click', (e) => {
     const items = getShoppingList();
     (recipe.ingredients || []).forEach(ing => {
@@ -366,13 +400,110 @@ function renderDetail(app) {
   });
 }
 
+function openCookMode(recipe) {
+  state.view = 'cook';
+  state.cookRecipeId = recipe.id;
+  state.cookStep = 0;
+  resetStepTimer();
+  render();
+}
+
+function resetStepTimer() {
+  if (cookIntervalId) { clearInterval(cookIntervalId); cookIntervalId = null; }
+  state.cookTimerRemaining = null;
+  state.cookTimerRunning = false;
+}
+
+function toggleCookTimer(stepData) {
+  if (state.cookTimerRunning) {
+    clearInterval(cookIntervalId);
+    cookIntervalId = null;
+    state.cookTimerRunning = false;
+    render();
+    return;
+  }
+  if (state.cookTimerRemaining == null) state.cookTimerRemaining = stepData.timerMinutes * 60;
+  state.cookTimerRunning = true;
+  render();
+  cookIntervalId = setInterval(() => {
+    state.cookTimerRemaining--;
+    const display = document.getElementById('cook-timer-text');
+    if (display) display.textContent = formatCookTimer(state.cookTimerRemaining);
+    if (state.cookTimerRemaining <= 0) {
+      clearInterval(cookIntervalId);
+      cookIntervalId = null;
+      state.cookTimerRunning = false;
+      playTimerBeep();
+      render();
+    }
+  }, 1000);
+}
+
+function renderCookMode(app) {
+  const recipe = findRecipeById(state.cookRecipeId);
+  if (!recipe || !recipe.instructions || !recipe.instructions.length) {
+    state.view = 'detail'; state.openId = state.cookRecipeId; render(); return;
+  }
+  const steps = recipe.instructions;
+  const total = steps.length;
+  const idx = Math.min(state.cookStep, total - 1);
+  const stepData = getStepData(steps[idx]);
+
+  const timerHTML = stepData.timerMinutes > 0 ? `
+    <div class="cook-timer">
+      <div class="cook-timer-display" id="cook-timer-text">${formatCookTimer(state.cookTimerRemaining != null ? state.cookTimerRemaining : stepData.timerMinutes * 60)}</div>
+      <div class="cook-timer-controls">
+        <button class="timer-toggle-btn">${state.cookTimerRunning ? 'Pause' : (state.cookTimerRemaining ? 'Resume' : 'Start')}</button>
+        <button class="timer-reset-btn">Reset</button>
+      </div>
+      <a class="real-timer-link" href="shortcuts://run-shortcut?name=${encodeURIComponent('Start Timer')}&input=text&text=${stepData.timerMinutes}">Start real timer instead &rarr;</a>
+    </div>` : '';
+
+  app.innerHTML = `
+    <button class="back-btn cook-exit-btn">&larr; Exit</button>
+    <div class="cook-progress">Step ${idx + 1} of ${total}</div>
+    <div class="cook-step-text">${stepData.text}</div>
+    ${timerHTML}
+    <div class="cook-nav">
+      <button class="cook-back-btn" ${idx === 0 ? 'disabled' : ''}>Back</button>
+      <button class="cook-next-btn">${idx === total - 1 ? 'Finish' : 'Next'}</button>
+    </div>
+  `;
+
+  app.querySelector('.cook-exit-btn').addEventListener('click', () => {
+    resetStepTimer();
+    state.view = 'detail'; state.openId = state.cookRecipeId;
+    render();
+  });
+  app.querySelector('.cook-back-btn').addEventListener('click', () => {
+    if (idx === 0) return;
+    resetStepTimer();
+    state.cookStep = idx - 1;
+    render();
+  });
+  app.querySelector('.cook-next-btn').addEventListener('click', () => {
+    resetStepTimer();
+    if (idx === total - 1) {
+      state.view = 'detail'; state.openId = state.cookRecipeId;
+    } else {
+      state.cookStep = idx + 1;
+    }
+    render();
+  });
+
+  const toggleBtn = app.querySelector('.timer-toggle-btn');
+  if (toggleBtn) toggleBtn.addEventListener('click', () => toggleCookTimer(stepData));
+  const resetBtn = app.querySelector('.timer-reset-btn');
+  if (resetBtn) resetBtn.addEventListener('click', () => { resetStepTimer(); render(); });
+}
+
 function openAddForm() {
   state.view = 'add';
   state.editingId = null;
   state.formSection = state.section;
   state.formData = emptyFormData();
   state.formIngredients = [{ amount: '', unit: '', name: '' }];
-  state.formInstructions = [''];
+  state.formInstructions = [{ text: '', timerMinutes: '' }];
   render();
 }
 
@@ -402,7 +533,9 @@ function openEditForm(recipe) {
   state.formIngredients = (recipe.ingredients && recipe.ingredients.length)
     ? recipe.ingredients.map(i => ({ amount: String(i.amount), unit: i.unit, name: i.name }))
     : [{ amount: '', unit: '', name: '' }];
-  state.formInstructions = (recipe.instructions && recipe.instructions.length) ? [...recipe.instructions] : [''];
+  state.formInstructions = (recipe.instructions && recipe.instructions.length)
+    ? recipe.instructions.map(s => { const d = getStepData(s); return { text: d.text, timerMinutes: d.timerMinutes ? String(d.timerMinutes) : '' }; })
+    : [{ text: '', timerMinutes: '' }];
   render();
 }
 
@@ -422,7 +555,10 @@ function renderAddForm(app) {
   const instructionRows = state.formInstructions.map((step, i) => `
     <div class="form-instruction-row">
       <span class="step-num">${i + 1}.</span>
-      <textarea class="instr-text" data-index="${i}" placeholder="Describe this step...">${step}</textarea>
+      <div class="form-instruction-fields">
+        <textarea class="instr-text" data-index="${i}" placeholder="Describe this step...">${step.text}</textarea>
+        <input type="number" class="instr-timer" data-index="${i}" min="0" placeholder="Timer (min, optional)" value="${escapeAttr(step.timerMinutes)}">
+      </div>
       <span class="row-remove" data-type="instruction" data-index="${i}">&times;</span>
     </div>`).join('');
 
@@ -496,7 +632,8 @@ function renderAddForm(app) {
   document.querySelectorAll('.ing-amount').forEach(el => el.addEventListener('input', () => { state.formIngredients[el.dataset.index].amount = el.value; }));
   document.querySelectorAll('.ing-unit').forEach(el => el.addEventListener('change', () => { state.formIngredients[el.dataset.index].unit = el.value; }));
   document.querySelectorAll('.ing-name').forEach(el => el.addEventListener('input', () => { state.formIngredients[el.dataset.index].name = el.value; }));
-  document.querySelectorAll('.instr-text').forEach(el => el.addEventListener('input', () => { state.formInstructions[el.dataset.index] = el.value; }));
+  document.querySelectorAll('.instr-text').forEach(el => el.addEventListener('input', () => { state.formInstructions[el.dataset.index].text = el.value; }));
+  document.querySelectorAll('.instr-timer').forEach(el => el.addEventListener('input', () => { state.formInstructions[el.dataset.index].timerMinutes = el.value; }));
 
   document.querySelectorAll('.row-remove').forEach(el => {
     el.addEventListener('click', () => {
@@ -506,7 +643,7 @@ function renderAddForm(app) {
         if (state.formIngredients.length === 0) state.formIngredients.push({ amount: '', unit: '', name: '' });
       } else {
         state.formInstructions.splice(idx, 1);
-        if (state.formInstructions.length === 0) state.formInstructions.push('');
+        if (state.formInstructions.length === 0) state.formInstructions.push({ text: '', timerMinutes: '' });
       }
       render();
     });
@@ -517,7 +654,7 @@ function renderAddForm(app) {
     render();
   });
   document.getElementById('add-instruction-btn').addEventListener('click', () => {
-    state.formInstructions.push('');
+    state.formInstructions.push({ text: '', timerMinutes: '' });
     render();
   });
 
@@ -533,7 +670,12 @@ function renderAddForm(app) {
     const ingredients = state.formIngredients
       .filter(ing => ing.name.trim())
       .map(ing => ({ name: ing.name.trim(), amount: parseFloat(ing.amount) || 0, unit: ing.unit }));
-    const instructions = state.formInstructions.map(s => s.trim()).filter(Boolean);
+    const instructions = state.formInstructions
+      .filter(s => s.text.trim())
+      .map(s => {
+        const mins = Number(s.timerMinutes) || 0;
+        return mins > 0 ? { text: s.text.trim(), timerMinutes: mins } : s.text.trim();
+      });
     const macros = (state.formData.calories || state.formData.protein || state.formData.carbs || state.formData.fat)
       ? { calories: Number(state.formData.calories) || 0, protein: Number(state.formData.protein) || 0, carbs: Number(state.formData.carbs) || 0, fat: Number(state.formData.fat) || 0 }
       : null;
