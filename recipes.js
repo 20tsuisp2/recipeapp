@@ -1,1 +1,36 @@
-
+const starterRecipes = {
+  quick: [
+    { id: 'q1', title: 'Rice Paper Shrimp Pancakes', desc: 'Crispy pan-fried rice paper filled with seasoned shrimp, served with a spicy dipping sauce.', prepHours: 0, prepMinutes: 20, cookHours: 0, cookMinutes: 10, servings: 2,
+      ingredients: [{ name: 'shrimp, peeled and deveined', amount: 340, unit: 'g' },{ name: 'green onion, chopped', amount: 1, unit: '' },{ name: 'garlic clove, minced', amount: 1, unit: '' },{ name: 'oyster sauce', amount: 15, unit: 'ml' },{ name: 'sesame oil', amount: 5, unit: 'ml' },{ name: 'corn starch', amount: 6, unit: 'g' },{ name: 'salt', amount: 1, unit: 'g' },{ name: 'white pepper', amount: 1, unit: '' },{ name: 'rice paper sheets, 22cm round', amount: 8, unit: '' },{ name: 'egg, beaten', amount: 1, unit: '' },{ name: 'avocado oil', amount: 60, unit: 'ml' },{ name: 'soy sauce, for dipping sauce', amount: 45, unit: 'ml' },{ name: 'sugar, for dipping sauce', amount: 5, unit: 'g' },{ name: 'chili crisp, for dipping sauce', amount: 10, unit: 'g' },{ name: 'rice vinegar, for dipping sauce', amount: 5, unit: 'ml' },{ name: 'sesame seeds, for dipping sauce', amount: 3, unit: 'g' }],
+      instructions: ['Finely mince the shrimp (by hand or in a food processor) until it forms a paste.','Mix the shrimp with the green onion, garlic, oyster sauce, sesame oil, corn starch, salt and white pepper.','Whisk together the soy sauce, sugar, chili crisp, rice vinegar and sesame seeds for the dipping sauce; set aside.','Quickly dip one rice paper sheet in water and lay it flat, then dip a second sheet and stack it on top. Spread half the shrimp mixture over it, leaving a small border.','Dip two more sheets, lay them on top, and press the edges firmly to seal. Repeat with the rest of the rice paper and filling to make a second pancake.','Brush both sides of each pancake with the beaten egg.',{ text: 'Heat half the avocado oil in a pan over medium heat and fry one pancake until golden.', timerMinutes: 4 },{ text: 'Add the remaining oil, flip, and fry the other side until the shrimp is cooked through. Repeat with the second pancake.', timerMinutes: 4 },'Serve hot with the dipping sauce on the side.'],
+      macros: { calories: 674, protein: 45, carbs: 38, fat: 38 }, notes: 'Best eaten fresh — the rice paper loses its crispness once it sits or is reheated.' },
+    { id: 'q2', title: 'Zucchini Frittata', desc: 'Eggs, zucchini, cheese — pan to oven in 15 minutes.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 15, servings: 2,
+      ingredients: [{ name: 'eggs', amount: 6, unit: '' },{ name: 'zucchini, sliced', amount: 200, unit: 'g' },{ name: 'parmesan, grated', amount: 30, unit: 'g' },{ name: 'olive oil', amount: 15, unit: 'ml' },{ name: 'salt', amount: 2, unit: 'g' }],
+      instructions: ['Whisk the eggs with the parmesan and salt.',{ text: 'Heat oil in an oven-safe pan, cook zucchini until soft.', timerMinutes: 5 },{ text: 'Pour in the eggs, cook on low until mostly set.', timerMinutes: 5 },{ text: 'Finish under the grill for 3-4 minutes until golden on top.', timerMinutes: 4 }],
+      macros: { calories: 340, protein: 24, carbs: 6, fat: 24 }, notes: 'Good hot or cold, keeps well for lunch the next day.' },
+    { id: 'q3', title: 'Baked Salmon with Tomatoes & Zucchini', desc: 'One tray, 20 minutes, hard to overcook.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 20, servings: 2,
+      ingredients: [{ name: 'salmon fillets', amount: 2, unit: '' },{ name: 'cherry tomatoes', amount: 200, unit: 'g' },{ name: 'zucchini, sliced', amount: 200, unit: 'g' },{ name: 'olive oil', amount: 20, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
+      instructions: ['Preheat oven to 200°C.','Place salmon, tomatoes and zucchini on a tray. Drizzle with oil, scatter over crushed garlic.',{ text: 'Bake for 18-20 minutes until the salmon flakes easily.', timerMinutes: 20 }],
+      macros: { calories: 410, protein: 38, carbs: 9, fat: 25 }, notes: 'Serve with rice or crusty bread.' }
+  ],
+  prep: [
+    { id: 'p1', title: 'Beef Ragù', desc: 'Slow-simmered beef and tomato sauce, freezes well.', prepHours: 0, prepMinutes: 15, cookHours: 1, cookMinutes: 30, servings: 4,
+      ingredients: [{ name: 'beef mince', amount: 500, unit: 'g' },{ name: 'onion, diced', amount: 1, unit: '' },{ name: 'carrot, diced', amount: 1, unit: '' },{ name: 'celery stick, diced', amount: 1, unit: '' },{ name: 'tomato passata', amount: 700, unit: 'ml' },{ name: 'olive oil', amount: 20, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
+      instructions: [{ text: 'Heat oil in a large pot, soften onion, carrot and celery.', timerMinutes: 5 },'Add beef mince, cook until browned.','Stir in garlic and passata, season.',{ text: 'Simmer on low for 1.5 hours, stirring occasionally.', timerMinutes: 90 }],
+      macros: { calories: 390, protein: 32, carbs: 14, fat: 22 }, notes: 'Freezes well in portions for up to 3 months.' },
+    { id: 'p2', title: 'Meatballs in Tomato Sauce', desc: 'Big batch, great over pasta or on its own.', prepHours: 0, prepMinutes: 20, cookHours: 0, cookMinutes: 30, servings: 4,
+      ingredients: [{ name: 'beef mince', amount: 500, unit: 'g' },{ name: 'breadcrumbs', amount: 50, unit: 'g' },{ name: 'egg', amount: 1, unit: '' },{ name: 'parmesan, grated', amount: 30, unit: 'g' },{ name: 'tomato passata', amount: 500, unit: 'ml' },{ name: 'garlic cloves', amount: 2, unit: '' }],
+      instructions: ['Mix beef, breadcrumbs, egg and parmesan. Roll into balls.','Fry meatballs in a splash of oil until browned all over.',{ text: 'Add passata and garlic, cover and simmer for 20 minutes.', timerMinutes: 20 }],
+      macros: { calories: 410, protein: 34, carbs: 16, fat: 23 }, notes: 'Serve over pasta or with crusty bread.' }
+  ],
+  baking: [
+    { id: 'b1', title: 'Basic Pancakes', desc: 'Four ingredients, ready in 10 minutes.', prepHours: 0, prepMinutes: 5, cookHours: 0, cookMinutes: 10, servings: 2,
+      ingredients: [{ name: 'flour', amount: 120, unit: 'g' },{ name: 'milk', amount: 180, unit: 'ml' },{ name: 'egg', amount: 1, unit: '' },{ name: 'butter, melted', amount: 15, unit: 'g' }],
+      instructions: ['Whisk flour, milk and egg into a smooth batter.','Stir in melted butter.',{ text: 'Cook spoonfuls in a hot non-stick pan, then flip and cook the other side.', timerMinutes: 2 }],
+      macros: { calories: 320, protein: 12, carbs: 44, fat: 10 }, notes: 'Top with fruit or honey.' },
+    { id: 'b2', title: 'One-Bowl Vanilla Cake', desc: 'Mix, pour, bake — no mixer needed.', prepHours: 0, prepMinutes: 10, cookHours: 0, cookMinutes: 35, servings: 8,
+      ingredients: [{ name: 'flour', amount: 250, unit: 'g' },{ name: 'sugar', amount: 200, unit: 'g' },{ name: 'butter, softened', amount: 150, unit: 'g' },{ name: 'eggs', amount: 3, unit: '' },{ name: 'milk', amount: 80, unit: 'ml' },{ name: 'baking powder', amount: 8, unit: 'g' },{ name: 'vanilla extract', amount: 5, unit: 'ml' }],
+      instructions: ['Preheat oven to 180°C, grease a cake tin.','Beat butter and sugar until pale and fluffy.','Beat in eggs one at a time, then vanilla.','Fold in flour and baking powder, then milk.',{ text: 'Pour into the tin and bake for 30-35 minutes until a skewer comes out clean.', timerMinutes: 35 }],
+      macros: { calories: 310, protein: 5, carbs: 42, fat: 14 }, notes: 'Keeps for 3 days in an airtight container.' }
+  ]
+};
