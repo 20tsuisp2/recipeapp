@@ -4,10 +4,8 @@ const SHOPPING_KEY = 'shoppingList';
 const FRIDGE_KEY = 'fridgeItems';
 const EDITED_KEY = 'recipeEdits';
 
-
-const sectionNames = { quick: 'Quick Meals', prep: 'Meal Prep', baking: 'Baking' };
-const tabNames = { ...sectionNames, fridge: 'Fridge', list: 'List' };
-let state = { section: 'quick', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null };
+const tabNames = { recipes: 'Recipes', fridge: 'Fridge', list: 'List' };
+let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: {}, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null };
 let cookIntervalId = null;
 
 function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
@@ -120,8 +118,13 @@ function tabsHTML() {
     `<div class="tab ${key === state.section ? 'active' : ''}" data-section="${key}">${tabNames[key]}</div>`
   ).join('');
 }
+function folderLabel(id) {
+  const f = folderDefs.find(f => f.id === id);
+  return f ? f.label : id;
+}
 function recipeCardHTML(r, opts = {}) {
-  const thumb = r.photo ? `<img src="${r.photo}" class="card-thumb">` : '';
+  const img = r.image || r.photo;
+  const thumb = img ? `<img src="${img}" class="card-thumb">` : '';
   const checkbox = opts.selectMode ? `<span class="select-checkbox">${opts.selected ? '✓' : ''}</span>` : '';
   const badge = opts.badgeText ? `<span class="badge">${opts.badgeText}</span>` : '';
   return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
@@ -152,9 +155,9 @@ function resizeImage(file, callback) {
 
 function getCustomRecipes() {
   const stored = localStorage.getItem(STORAGE_KEY);
-  return stored ? JSON.parse(stored) : { quick: [], prep: [], baking: [] };
+  return stored ? JSON.parse(stored) : [];
 }
-function saveCustomRecipes(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function saveCustomRecipes(list) { localStorage.setItem(STORAGE_KEY, JSON.stringify(list)); }
 function getDeletedIds() {
   const stored = localStorage.getItem(DELETED_KEY);
   return stored ? JSON.parse(stored) : [];
@@ -163,14 +166,6 @@ function deleteRecipeById(id) {
   const deleted = getDeletedIds();
   deleted.push(id);
   localStorage.setItem(DELETED_KEY, JSON.stringify(deleted));
-}
-function getAllRecipes(section) {
-  const custom = getCustomRecipes();
-  const deleted = getDeletedIds();
-  const edits = getRecipeEdits();
-  return [...starterRecipes[section], ...(custom[section] || [])]
-    .filter(r => !deleted.includes(r.id))
-    .map(r => edits[r.id] ? { ...r, ...edits[r.id] } : r);
 }
 function getRecipeEdits() {
   const stored = localStorage.getItem(EDITED_KEY);
@@ -195,22 +190,23 @@ function exportRecipeData() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+function getAllRecipes() {
+  const custom = getCustomRecipes();
+  const deleted = getDeletedIds();
+  const edits = getRecipeEdits();
+  return [...allRecipes, ...custom]
+    .filter(r => !deleted.includes(r.id))
+    .map(r => edits[r.id] ? { ...r, ...edits[r.id] } : r);
+}
+function getRecipesForFolder(folderId) {
+  return getAllRecipes().filter(r => (r.folders || []).includes(folderId));
+}
 function findRecipeById(id) {
-  for (const section of Object.keys(sectionNames)) {
-    const found = getAllRecipes(section).find(r => r.id === id);
-    if (found) return found;
-  }
-  return null;
+  return getAllRecipes().find(r => r.id === id) || null;
 }
 function searchRecipes(query) {
   const q = query.toLowerCase();
-  let results = [];
-  Object.keys(sectionNames).forEach(section => {
-    getAllRecipes(section).forEach(r => {
-      if (r.title.toLowerCase().includes(q)) results.push({ ...r, section });
-    });
-  });
-  return results;
+  return getAllRecipes().filter(r => r.title.toLowerCase().includes(q));
 }
 function getShoppingList() {
   const stored = localStorage.getItem(SHOPPING_KEY);
@@ -225,15 +221,13 @@ function saveFridgeItems(items) { localStorage.setItem(FRIDGE_KEY, JSON.stringif
 function findMatchingRecipes(selectedTexts) {
   const lowerSelected = selectedTexts.map(t => t.toLowerCase().trim()).filter(Boolean);
   const results = [];
-  Object.keys(sectionNames).forEach(section => {
-    getAllRecipes(section).forEach(r => {
-      const ingredientNames = (r.ingredients || []).map(i => i.name.toLowerCase());
-      let matchCount = 0;
-      lowerSelected.forEach(sel => {
-        if (ingredientNames.some(name => name.includes(sel) || sel.includes(name))) matchCount++;
-      });
-      if (matchCount > 0) results.push({ ...r, section, matchCount, totalIngredients: ingredientNames.length });
+  getAllRecipes().forEach(r => {
+    const ingredientNames = (r.ingredients || []).map(i => i.name.toLowerCase());
+    let matchCount = 0;
+    lowerSelected.forEach(sel => {
+      if (ingredientNames.some(name => name.includes(sel) || sel.includes(name))) matchCount++;
     });
+    if (matchCount > 0) results.push({ ...r, matchCount, totalIngredients: ingredientNames.length });
   });
   results.sort((a, b) => b.matchCount - a.matchCount);
   return results;
@@ -250,59 +244,23 @@ function render() {
   if (state.view === 'add') { renderAddForm(app); return; }
   if (state.section === 'list') { renderShoppingList(app); return; }
   if (state.section === 'fridge') { renderFridgeTab(app); return; }
-  renderRecipeTab(app);
+  renderRecipesTab(app);
 }
 
-function renderRecipeTab(app) {
-  const searchBarHTML = `<div class="search-bar"><input id="search-input" type="search" placeholder="Search recipes..." value="${escapeAttr(state.query)}"></div>`;
-  let bodyHTML;
-
-  if (state.query.trim()) {
-    const results = searchRecipes(state.query);
-    const cards = results.map(r => recipeCardHTML(r, { badgeText: sectionNames[r.section] })).join('');
-    bodyHTML = `<div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
-  } else {
-    const controlsHTML = `<div class="list-controls"><button class="export-btn">Export</button><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
-    const recipes = getAllRecipes(state.section);
-    const cards = recipes.map(r =>
-      recipeCardHTML(r, { selectMode: state.selectMode, selected: state.selected.includes(r.id) })
-    ).join('');
-    const selectBarHTML = (state.selectMode && state.selected.length > 0)
-      ? `<div class="select-bar"><span>${state.selected.length} selected</span><button class="add-to-list-btn">Add to list</button></div>` : '';
-    bodyHTML = `<div class="section-tabs">${tabsHTML()}</div>${controlsHTML}<div id="cards">${cards || '<p class="empty">No recipes here yet.</p>'}</div>${selectBarHTML}`;
-  }
-
-  app.innerHTML = searchBarHTML + bodyHTML;
-
-  const searchInput = document.getElementById('search-input');
-  searchInput.addEventListener('input', (e) => {
-    state.query = e.target.value;
-    render();
-    const newInput = document.getElementById('search-input');
-    if (newInput) { newInput.focus(); newInput.setSelectionRange(newInput.value.length, newInput.value.length); }
-  });
-
+function bindSharedTabClicks(resetFridgeResults) {
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       state.section = tab.dataset.section;
       state.query = '';
       state.selectMode = false;
       state.selected = [];
+      if (resetFridgeResults) state.fridgeResults = null;
       render();
     });
   });
+}
 
-  const selectToggle = document.querySelector('.select-toggle');
-  if (selectToggle) {
-    selectToggle.addEventListener('click', () => {
-      state.selectMode = !state.selectMode;
-      state.selected = [];
-      render();
-    });
-  }
-  const exportBtn = document.querySelector('.export-btn');
-  if (exportBtn) exportBtn.addEventListener('click', () => exportRecipeData());
-
+function bindRecipeCardClicks() {
   document.querySelectorAll('.recipe-card').forEach(card => {
     card.addEventListener('click', () => {
       const id = card.dataset.id;
@@ -318,11 +276,77 @@ function renderRecipeTab(app) {
       }
     });
   });
+}
+
+function renderRecipesTab(app) {
+  const searchBarHTML = `<div class="search-bar"><input id="search-input" type="search" placeholder="Search recipes..." value="${escapeAttr(state.query)}"></div>`;
+  let bodyHTML;
+
+  if (state.query.trim()) {
+    const results = searchRecipes(state.query);
+    const cards = results.map(r => recipeCardHTML(r, { badgeText: (r.folders || []).map(folderLabel).join(', ') })).join('');
+    bodyHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
+  } else {
+    const controlsHTML = `<div class="list-controls"><button class="export-btn">Export</button><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
+    const foldersHTML = folderDefs.map(f => {
+      const recipes = getRecipesForFolder(f.id);
+      const expanded = !!state.expandedFolders[f.id];
+      const cards = expanded
+        ? recipes.map(r => recipeCardHTML(r, { selectMode: state.selectMode, selected: state.selected.includes(r.id) })).join('')
+        : '';
+      return `
+        <div class="folder-section">
+          <button class="folder-header" data-folder="${f.id}">
+            <span class="folder-chevron">${expanded ? '▾' : '▸'}</span>
+            <span class="folder-label">${f.label}</span>
+            <span class="folder-count">${recipes.length}</span>
+          </button>
+          ${expanded ? `<div class="folder-cards">${cards || '<p class="empty">No recipes in this folder yet.</p>'}</div>` : ''}
+        </div>`;
+    }).join('');
+    const selectBarHTML = (state.selectMode && state.selected.length > 0)
+      ? `<div class="select-bar"><span>${state.selected.length} selected</span><button class="add-to-list-btn">Add to list</button></div>` : '';
+    bodyHTML = `<div class="section-tabs">${tabsHTML()}</div>${controlsHTML}${foldersHTML}${selectBarHTML}`;
+  }
+
+  app.innerHTML = searchBarHTML + bodyHTML;
+
+  const searchInput = document.getElementById('search-input');
+  searchInput.addEventListener('input', (e) => {
+    state.query = e.target.value;
+    render();
+    const newInput = document.getElementById('search-input');
+    if (newInput) { newInput.focus(); newInput.setSelectionRange(newInput.value.length, newInput.value.length); }
+  });
+
+  bindSharedTabClicks(true);
+
+  if (!state.query.trim()) {
+    document.querySelectorAll('.folder-header').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const id = btn.dataset.folder;
+        state.expandedFolders[id] = !state.expandedFolders[id];
+        render();
+      });
+    });
+    const selectToggle = document.querySelector('.select-toggle');
+    if (selectToggle) {
+      selectToggle.addEventListener('click', () => {
+        state.selectMode = !state.selectMode;
+        state.selected = [];
+        render();
+      });
+    }
+    const exportBtn = document.querySelector('.export-btn');
+    if (exportBtn) exportBtn.addEventListener('click', () => exportRecipeData());
+  }
+
+  bindRecipeCardClicks();
 
   const addToListBtn = document.querySelector('.add-to-list-btn');
   if (addToListBtn) {
     addToListBtn.addEventListener('click', () => {
-      const recipes = getAllRecipes(state.section).filter(r => state.selected.includes(r.id));
+      const recipes = getAllRecipes().filter(r => state.selected.includes(r.id));
       const items = getShoppingList();
       recipes.forEach(r => {
         (r.ingredients || []).forEach(ing => {
@@ -345,18 +369,12 @@ function renderShoppingList(app) {
       <span class="list-check"></span>
       <span class="list-text">${item.text}</span>
       <span class="list-delete">&times;</span>
-    </div>`).join('') : '<p class="empty">Your list is empty. Select recipes on another tab and tap "Add to list", or use the + button to add an item.</p>';
+    </div>`).join('') : '<p class="empty">Your list is empty. Select recipes on the Recipes tab and tap "Add to list", or use the + button to add an item.</p>';
   const clearBtn = items.length ? '<button class="clear-list-btn">Clear list</button>' : '';
 
   app.innerHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="shopping-list">${itemsHTML}</div>${clearBtn}`;
 
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      state.section = tab.dataset.section;
-      state.query = '';
-      render();
-    });
-  });
+  bindSharedTabClicks(true);
   document.querySelectorAll('.list-check').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.closest('.list-item').dataset.id;
@@ -404,7 +422,7 @@ function addFridgeItem() {
 function renderFridgeTab(app) {
   if (state.fridgeResults) {
     const cards = state.fridgeResults
-      .map(r => recipeCardHTML(r, { badgeText: `${sectionNames[r.section]} · ${r.matchCount}/${r.totalIngredients} matched` }))
+      .map(r => recipeCardHTML(r, { badgeText: `${(r.folders || []).map(folderLabel).join(', ')} · ${r.matchCount}/${r.totalIngredients} matched` }))
       .join('');
     app.innerHTML = `
       <button class="back-btn" id="fridge-results-back">&larr; Back to Fridge</button>
@@ -412,14 +430,7 @@ function renderFridgeTab(app) {
       <div id="cards">${cards || '<p class="empty">No recipes match what you selected. Try selecting a few more items.</p>'}</div>
     `;
     document.getElementById('fridge-results-back').addEventListener('click', () => { state.fridgeResults = null; render(); });
-    document.querySelectorAll('.recipe-card').forEach(card => {
-      card.addEventListener('click', () => {
-        state.openId = card.dataset.id;
-        state.view = 'detail';
-        state.multiplier = 1;
-        render();
-      });
-    });
+    bindRecipeCardClicks();
     return;
   }
 
@@ -436,14 +447,7 @@ function renderFridgeTab(app) {
 
   app.innerHTML = `<div class="section-tabs">${tabsHTML()}</div><p class="fridge-subtitle">Tap items to select what you want to cook with.</p><div id="fridge-list">${itemsHTML}</div>${findBtn}`;
 
-  document.querySelectorAll('.tab').forEach(tab => {
-    tab.addEventListener('click', () => {
-      state.section = tab.dataset.section;
-      state.query = '';
-      state.fridgeResults = null;
-      render();
-    });
-  });
+  bindSharedTabClicks(true);
   document.querySelectorAll('.list-check').forEach(el => {
     el.addEventListener('click', () => {
       const id = el.closest('.list-item').dataset.id;
@@ -510,7 +514,11 @@ function renderDetail(app) {
 
   const notesHTML = recipe.notes ? `<div class="notes"><strong>Notes:</strong> ${recipe.notes}</div>` : '';
 
-  const photoHTML = recipe.photo ? `<img src="${recipe.photo}" class="detail-photo">` : '';
+  const img = recipe.image || recipe.photo;
+  const photoHTML = img ? `<img src="${img}" class="detail-photo">` : '';
+
+  const foldersRow = (recipe.folders && recipe.folders.length)
+    ? `<div class="detail-folders">${recipe.folders.map(id => `<span class="badge">${folderLabel(id)}</span>`).join('')}</div>` : '';
 
   const startCookingHTML = (recipe.instructions && recipe.instructions.length)
     ? `<button class="start-cooking-btn">▶ Start Cooking</button>` : '';
@@ -519,6 +527,7 @@ function renderDetail(app) {
     <button class="back-btn">&larr; Back</button>
     <h2 class="detail-title">${recipe.title}</h2>
     ${photoHTML}
+    ${foldersRow}
     ${startCookingHTML}
     ${timeRow}
     <div class="servings-row"><span>Servings</span><div class="stepper"><button class="step-minus">-</button><span>${currentServings}</span><button class="step-plus">+</button></div></div>
@@ -723,7 +732,7 @@ function renderPasteForm(app) {
 
     state.view = 'add';
     state.editingId = null;
-    state.formSection = state.section;
+    state.formFolders = [];
     state.formData = emptyFormData();
     state.formData.title = state.pasteData.title;
     state.formIngredients = parsedIngredients.length
@@ -739,7 +748,7 @@ function renderPasteForm(app) {
 function openAddForm() {
   state.view = 'add';
   state.editingId = null;
-  state.formSection = state.section;
+  state.formFolders = [];
   state.formData = emptyFormData();
   state.formIngredients = [{ amount: '', unit: '', name: '' }];
   state.formInstructions = [{ text: '', timerMinutes: '' }];
@@ -747,13 +756,9 @@ function openAddForm() {
 }
 
 function openEditForm(recipe) {
-  let section = state.section;
-  for (const key of Object.keys(sectionNames)) {
-    if (getAllRecipes(key).some(r => r.id === recipe.id)) { section = key; break; }
-  }
   state.view = 'add';
   state.editingId = recipe.id;
-  state.formSection = section;
+  state.formFolders = recipe.folders ? [...recipe.folders] : [];
   state.formData = {
     title: recipe.title || '',
     desc: recipe.desc || '',
@@ -767,7 +772,7 @@ function openEditForm(recipe) {
     protein: recipe.macros ? recipe.macros.protein : '',
     carbs: recipe.macros ? recipe.macros.carbs : '',
     fat: recipe.macros ? recipe.macros.fat : '',
-    photo: recipe.photo || null
+    photo: recipe.image || recipe.photo || null
   };
   state.formIngredients = (recipe.ingredients && recipe.ingredients.length)
     ? recipe.ingredients.map(i => ({ amount: String(i.amount), unit: i.unit, name: i.name }))
@@ -803,6 +808,12 @@ function renderAddForm(app) {
 
   const photoPreview = state.formData.photo ? `<img src="${state.formData.photo}" class="photo-preview">` : '';
 
+  const folderCheckboxes = folderDefs.map(f => `
+    <label class="folder-checkbox">
+      <input type="checkbox" class="folder-check-input" value="${f.id}" ${state.formFolders.includes(f.id) ? 'checked' : ''}>
+      ${f.label}
+    </label>`).join('');
+
   app.innerHTML = `
     <button class="back-btn">&larr; Cancel</button>
     <h2 class="detail-title">${state.editingId ? 'Edit Recipe' : 'Add Recipe'}</h2>
@@ -817,6 +828,9 @@ function renderAddForm(app) {
 
     <label class="form-label">Short description</label>
     <input type="text" id="f-desc" placeholder="Shown in the recipe list" value="${escapeAttr(state.formData.desc)}">
+
+    <label class="form-label">Folders (choose at least one)</label>
+    <div class="folder-checkboxes">${folderCheckboxes}</div>
 
     <label class="form-label">Prep time</label>
     <div class="duration-row">
@@ -860,6 +874,16 @@ function renderAddForm(app) {
     else { state.view = 'list'; }
     state.editingId = null;
     render();
+  });
+
+  document.querySelectorAll('.folder-check-input').forEach(cb => {
+    cb.addEventListener('change', () => {
+      if (cb.checked) {
+        if (!state.formFolders.includes(cb.value)) state.formFolders.push(cb.value);
+      } else {
+        state.formFolders = state.formFolders.filter(id => id !== cb.value);
+      }
+    });
   });
 
   const fieldMap = { 'f-title': 'title', 'f-desc': 'desc', 'f-prep-hr': 'prepHours', 'f-prep-min': 'prepMinutes', 'f-cook-hr': 'cookHours', 'f-cook-min': 'cookMinutes', 'f-servings': 'servings', 'f-notes': 'notes', 'f-calories': 'calories', 'f-protein': 'protein', 'f-carbs': 'carbs', 'f-fat': 'fat' };
@@ -906,6 +930,7 @@ function renderAddForm(app) {
 
   document.getElementById('save-recipe-btn').addEventListener('click', () => {
     if (!state.formData.title.trim()) { alert('Give the recipe a title first.'); return; }
+    if (!state.formFolders.length) { alert('Choose at least one folder for this recipe.'); return; }
     const ingredients = state.formIngredients
       .filter(ing => ing.name.trim())
       .map(ing => ({ name: ing.name.trim(), amount: parseFloat(ing.amount) || 0, unit: ing.unit }));
@@ -922,6 +947,7 @@ function renderAddForm(app) {
     const recipeData = {
       title: state.formData.title.trim(),
       desc: state.formData.desc.trim(),
+      folders: [...state.formFolders],
       prepHours: Number(state.formData.prepHours) || 0,
       prepMinutes: Number(state.formData.prepMinutes) || 0,
       cookHours: Number(state.formData.cookHours) || 0,
@@ -941,10 +967,9 @@ function renderAddForm(app) {
       state.editingId = null;
     } else {
       const newRecipe = { id: 'custom-' + Date.now(), ...recipeData };
-      const data = getCustomRecipes();
-      data[state.formSection].push(newRecipe);
-      saveCustomRecipes(data);
-      state.section = state.formSection;
+      const list = getCustomRecipes();
+      list.push(newRecipe);
+      saveCustomRecipes(list);
       state.view = 'list';
     }
     render();
