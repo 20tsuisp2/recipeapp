@@ -16,7 +16,7 @@ header h1 { font-family: 'Cormorant Garamond', serif; font-size: 30px; letter-sp
 main { max-width: 480px; margin: 0 auto; padding: 24px 18px; }
 
 .section-tabs { display: flex; gap: 8px; margin-bottom: 24px; }
-.tab { flex: 1; text-align: center; padding: 10px 6px; background: white; border: 1px solid var(--gold); border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--green); cursor: pointer; }
+.tab { flex: 1; text-align: center; padding: 10px 6px; background: white; border: 1px solid var(--gold); border-radius: 8px; font-size: 14px; font-weight: 600; font-family: 'Cormorant Garamond', serif; color: var(--green); cursor: pointer; }
 .tab.active { background: var(--green); color: var(--cream); border-color: var(--green); }
 
 .recipe-card { background: white; border-radius: 10px; padding: 16px; margin-bottom: 14px; box-shadow: 0 1px 4px rgba(0,0,0,0.08); cursor: pointer; }

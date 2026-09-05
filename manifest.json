@@ -1,6 +1,6 @@
 {
-  "name": "Recipe Book",
-  "short_name": "Recipes",
+  "name": "Jaco's Cook Book",
+  "short_name": "Jaco's Cook Book",
   "start_url": "index.html",
   "display": "standalone",
   "background_color": "#f5f1e8",
