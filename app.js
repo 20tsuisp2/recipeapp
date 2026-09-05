@@ -500,7 +500,7 @@ function renderDetail(app) {
   const ingredientsHTML = (recipe.ingredients && recipe.ingredients.length)
     ? `<ul class="ingredient-list">${recipe.ingredients.map(ing => {
         const scaled = ing.amount * state.multiplier;
-        const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 10) / 10;
+        const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 100) / 100;
         return `<li>${displayAmount}${ing.unit} ${ing.name}</li>`;
       }).join('')}</ul>`
     : `<p class="empty">No ingredients added yet.</p>`;
@@ -566,7 +566,7 @@ function renderDetail(app) {
     const items = getShoppingList();
     (recipe.ingredients || []).forEach(ing => {
       const scaled = ing.amount * state.multiplier;
-      const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 10) / 10;
+      const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 100) / 100;
       items.push({ id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: `${displayAmount}${ing.unit} ${ing.name}`, checked: false });
     });
     saveShoppingList(items);
