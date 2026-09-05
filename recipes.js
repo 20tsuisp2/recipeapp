@@ -26,10 +26,6 @@ const folderDefs = [
   {
     "id": "seafood",
     "label": "Seafood"
-  },
-  {
-    "id": "marinades",
-    "label": "Marinades"
   }
 ];
 
@@ -1910,3 +1906,7 @@ const allRecipes = [
     "notes": ""
   }
 ];
+
+const defaultFavorites = [];
+
+const defaultFridgeItems = [];

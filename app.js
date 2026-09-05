@@ -3,9 +3,10 @@ const DELETED_KEY = 'deletedRecipeIds';
 const SHOPPING_KEY = 'shoppingList';
 const FRIDGE_KEY = 'fridgeItems';
 const EDITED_KEY = 'recipeEdits';
+const FAVORITES_KEY = 'favoriteRecipeIds';
 
 const tabNames = { recipes: 'Recipes', fridge: 'Fridge', list: 'List' };
-let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: {}, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null };
+let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: { favourites: true }, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null };
 let cookIntervalId = null;
 
 function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
@@ -127,7 +128,8 @@ function recipeCardHTML(r, opts = {}) {
   const thumb = img ? `<img src="${img}" class="card-thumb">` : '';
   const checkbox = opts.selectMode ? `<span class="select-checkbox">${opts.selected ? '✓' : ''}</span>` : '';
   const badge = opts.badgeText ? `<span class="badge">${opts.badgeText}</span>` : '';
-  return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div></div>`;
+  const star = `<span class="favorite-star ${isFavorite(r.id) ? 'is-favorite' : ''}" data-id="${r.id}">${isFavorite(r.id) ? '★' : '☆'}</span>`;
+  return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div>${star}</div>`;
 }
 function emptyFormData() {
   return { title: '', desc: '', prepHours: '', prepMinutes: '', cookHours: '', cookMinutes: '', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
@@ -177,7 +179,9 @@ function exportRecipeData() {
     exportedAt: new Date().toISOString(),
     customRecipes: getCustomRecipes(),
     recipeEdits: getRecipeEdits(),
-    deletedRecipeIds: getDeletedIds()
+    deletedRecipeIds: getDeletedIds(),
+    favoriteRecipeIds: getFavoriteIds(),
+    fridgeItems: getFridgeItems()
   };
   const json = JSON.stringify(data, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
@@ -215,9 +219,35 @@ function getShoppingList() {
 function saveShoppingList(items) { localStorage.setItem(SHOPPING_KEY, JSON.stringify(items)); }
 function getFridgeItems() {
   const stored = localStorage.getItem(FRIDGE_KEY);
-  return stored ? JSON.parse(stored) : [];
+  if (stored) return JSON.parse(stored);
+  const seeded = (typeof defaultFridgeItems !== 'undefined') ? [...defaultFridgeItems] : [];
+  localStorage.setItem(FRIDGE_KEY, JSON.stringify(seeded));
+  return seeded;
 }
 function saveFridgeItems(items) { localStorage.setItem(FRIDGE_KEY, JSON.stringify(items)); }
+function getFavoriteIds() {
+  const stored = localStorage.getItem(FAVORITES_KEY);
+  if (stored) return JSON.parse(stored);
+  const seeded = (typeof defaultFavorites !== 'undefined') ? [...defaultFavorites] : [];
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(seeded));
+  return seeded;
+}
+function isFavorite(id) { return getFavoriteIds().includes(id); }
+function toggleFavorite(id) {
+  const favs = getFavoriteIds();
+  const idx = favs.indexOf(id);
+  if (idx === -1) favs.push(id); else favs.splice(idx, 1);
+  localStorage.setItem(FAVORITES_KEY, JSON.stringify(favs));
+}
+function bindFavoriteStars() {
+  document.querySelectorAll('.favorite-star').forEach(el => {
+    el.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(el.dataset.id);
+      render();
+    });
+  });
+}
 function findMatchingRecipes(selectedTexts) {
   const lowerSelected = selectedTexts.map(t => t.toLowerCase().trim()).filter(Boolean);
   const results = [];
@@ -276,6 +306,7 @@ function bindRecipeCardClicks() {
       }
     });
   });
+  bindFavoriteStars();
 }
 
 function renderRecipesTab(app) {
@@ -288,20 +319,26 @@ function renderRecipesTab(app) {
     bodyHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
   } else {
     const controlsHTML = `<div class="list-controls"><button class="export-btn">Export</button><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
-    const foldersHTML = folderDefs.map(f => {
-      const recipes = getRecipesForFolder(f.id);
+    const favoriteIds = getFavoriteIds();
+    const displaySections = [
+      { id: 'favourites', label: 'Favourites', recipes: getAllRecipes().filter(r => favoriteIds.includes(r.id)) },
+      ...folderDefs.map(f => ({ id: f.id, label: f.label, recipes: getRecipesForFolder(f.id) }))
+    ];
+    const foldersHTML = displaySections.map(f => {
+      const recipes = f.recipes;
       const expanded = !!state.expandedFolders[f.id];
       const cards = expanded
         ? recipes.map(r => recipeCardHTML(r, { selectMode: state.selectMode, selected: state.selected.includes(r.id) })).join('')
         : '';
+      const emptyMsg = f.id === 'favourites' ? 'No favourites yet — tap the star on any recipe to add it here.' : 'No recipes in this folder yet.';
       return `
-        <div class="folder-section">
+        <div class="folder-section ${f.id === 'favourites' ? 'favourites-section' : ''}">
           <button class="folder-header" data-folder="${f.id}">
             <span class="folder-chevron">${expanded ? '▾' : '▸'}</span>
             <span class="folder-label">${f.label}</span>
             <span class="folder-count">${recipes.length}</span>
           </button>
-          ${expanded ? `<div class="folder-cards">${cards || '<p class="empty">No recipes in this folder yet.</p>'}</div>` : ''}
+          ${expanded ? `<div class="folder-cards">${cards || `<p class="empty">${emptyMsg}</p>`}</div>` : ''}
         </div>`;
     }).join('');
     const selectBarHTML = (state.selectMode && state.selected.length > 0)
@@ -525,7 +562,10 @@ function renderDetail(app) {
 
   app.innerHTML = `
     <button class="back-btn">&larr; Back</button>
-    <h2 class="detail-title">${recipe.title}</h2>
+    <div class="detail-title-row">
+      <h2 class="detail-title">${recipe.title}</h2>
+      <span class="favorite-star detail-star ${isFavorite(recipe.id) ? 'is-favorite' : ''}" data-id="${recipe.id}">${isFavorite(recipe.id) ? '★' : '☆'}</span>
+    </div>
     ${photoHTML}
     ${foldersRow}
     ${startCookingHTML}
@@ -562,6 +602,7 @@ function renderDetail(app) {
   app.querySelector('.edit-btn').addEventListener('click', () => { openEditForm(recipe); });
   const startCookingBtn = app.querySelector('.start-cooking-btn');
   if (startCookingBtn) startCookingBtn.addEventListener('click', () => { openCookMode(recipe); });
+  bindFavoriteStars();
   app.querySelector('.add-to-list-detail-btn').addEventListener('click', (e) => {
     const items = getShoppingList();
     (recipe.ingredients || []).forEach(ing => {
