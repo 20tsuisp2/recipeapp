@@ -153,13 +153,35 @@ function folderLabel(id) {
   const f = folderDefs.find(f => f.id === id);
   return f ? f.label : id;
 }
+function totalTimeLabel(r) {
+  const mins = (Number(r.prepHours) || 0) * 60 + (Number(r.prepMinutes) || 0)
+    + (Number(r.cookHours) || 0) * 60 + (Number(r.cookMinutes) || 0);
+  if (!mins) return null;
+  if (mins < 60) return `${mins} min`;
+  const h = Math.floor(mins / 60), m = mins % 60;
+  return m ? `${h} hr ${m} min` : `${h} hr`;
+}
+function tileTone(id) {
+  let sum = 0;
+  for (let i = 0; i < String(id).length; i++) sum += String(id).charCodeAt(i);
+  return ['tone-tomato', 'tone-basil'][sum % 2];
+}
 function recipeCardHTML(r, opts = {}) {
   const img = r.image || r.photo;
-  const thumb = img ? `<img src="${img}" class="card-thumb">` : '';
+  const media = img
+    ? `<div class="card-media has-photo" style="background-image:url('${img}')">`
+    : `<div class="card-media ${tileTone(r.id)}">`;
   const checkbox = opts.selectMode ? `<span class="select-checkbox">${opts.selected ? '✓' : ''}</span>` : '';
   const badge = opts.badgeText ? `<span class="badge">${opts.badgeText}</span>` : '';
   const star = `<span class="favorite-star ${isFavorite(r.id) ? 'is-favorite' : ''}" data-id="${r.id}">${isFavorite(r.id) ? '★' : '☆'}</span>`;
-  return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">${checkbox}${thumb}<div class="card-body">${badge}<h3>${r.title}</h3><p>${r.desc || ''}</p></div>${star}</div>`;
+  const time = totalTimeLabel(r);
+  const serves = r.servings ? `Serves ${r.servings}` : null;
+  const meta = (time || serves)
+    ? `<div class="card-meta">${time ? `<span>${time}</span>` : ''}${serves ? `<span>${serves}</span>` : ''}</div>` : '';
+  return `<div class="recipe-card ${opts.selected ? 'card-selected' : ''}" data-id="${r.id}">
+    ${media}${checkbox}${star}<h3 class="card-title">${r.title}</h3></div>
+    <div class="card-body">${badge}${r.desc ? `<p class="card-desc">${r.desc}</p>` : ''}${meta}</div>
+  </div>`;
 }
 function emptyFormData() {
   return { title: '', desc: '', prepHours: '', prepMinutes: '', cookHours: '', cookMinutes: '', servings: '', notes: '', calories: '', protein: '', carbs: '', fat: '', photo: null };
@@ -423,7 +445,7 @@ function renderRecipesTab(app) {
     const cards = results.map(r => recipeCardHTML(r, { badgeText: (r.folders || []).map(folderLabel).join(', ') })).join('');
     bodyHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
   } else {
-    const surpriseHTML = `<div class="surprise-header"><button class="surprise-me-btn">🎲 Surprise Me</button></div>`;
+    const surpriseHTML = `<div class="surprise-header"><button class="surprise-me-btn">Surprise me</button></div>`;
     const controlsHTML = `<div class="list-controls"><button class="export-btn">Export</button><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
     const favoriteIds = getFavoriteIds();
     const displaySections = [
@@ -589,7 +611,7 @@ function renderFridgeTab(app) {
       .map(r => recipeCardHTML(r, { badgeText: `${(r.folders || []).map(folderLabel).join(', ')} · ${r.matchCount}/${r.totalIngredients} matched` }))
       .join('');
     app.innerHTML = `
-      <button class="back-btn" id="fridge-results-back">&larr; Back to Fridge</button>
+      <button class="back-btn" id="fridge-results-back">Back to Fridge</button>
       <h2 class="detail-title">Best Matches</h2>
       <div id="cards">${cards || '<p class="empty">No recipes match what you selected. Try selecting a few more items.</p>'}</div>
     `;
@@ -679,22 +701,25 @@ function renderDetail(app) {
   const notesHTML = recipe.notes ? `<div class="notes"><strong>Notes:</strong> ${recipe.notes}</div>` : '';
 
   const img = recipe.image || recipe.photo;
-  const photoHTML = img ? `<img src="${img}" class="detail-photo">` : '';
 
   const foldersRow = (recipe.folders && recipe.folders.length)
     ? `<div class="detail-folders">${recipe.folders.map(id => `<span class="badge">${folderLabel(id)}</span>`).join('')}</div>` : '';
 
   const startCookingHTML = (recipe.instructions && recipe.instructions.length)
-    ? `<button class="start-cooking-btn">▶ Start Cooking</button>` : '';
+    ? `<button class="start-cooking-btn">Start cooking</button>` : '';
+
+  const heroHTML = `
+    <div class="detail-hero ${img ? 'has-photo' : tileTone(recipe.id)}" ${img ? `style="background-image:url('${img}')"` : ''}>
+      <span class="favorite-star detail-star ${isFavorite(recipe.id) ? 'is-favorite' : ''}" data-id="${recipe.id}">${isFavorite(recipe.id) ? '★' : '☆'}</span>
+      <div class="detail-hero-inner">
+        ${foldersRow}
+        <h2 class="detail-title">${recipe.title}</h2>
+      </div>
+    </div>`;
 
   app.innerHTML = `
-    <button class="back-btn">&larr; Back</button>
-    <div class="detail-title-row">
-      <h2 class="detail-title">${recipe.title}</h2>
-      <span class="favorite-star detail-star ${isFavorite(recipe.id) ? 'is-favorite' : ''}" data-id="${recipe.id}">${isFavorite(recipe.id) ? '★' : '☆'}</span>
-    </div>
-    ${photoHTML}
-    ${foldersRow}
+    <button class="back-btn">Back</button>
+    ${heroHTML}
     ${startCookingHTML}
     ${timeRow}
     <div class="servings-row"><span>Servings</span><div class="stepper"><button class="step-minus">-</button><span>${currentServings}</span><button class="step-plus">+</button></div></div>
@@ -803,11 +828,11 @@ function renderCookMode(app) {
         <button class="timer-toggle-btn">${state.cookTimerRunning ? 'Pause' : (state.cookTimerRemaining ? 'Resume' : 'Start')}</button>
         <button class="timer-reset-btn">Reset</button>
       </div>
-      <a class="real-timer-link" href="shortcuts://run-shortcut?name=${encodeURIComponent('Start Timer')}&input=text&text=${stepData.timerMinutes}">Start real timer instead &rarr;</a>
+      <a class="real-timer-link" href="shortcuts://run-shortcut?name=${encodeURIComponent('Start Timer')}&input=text&text=${stepData.timerMinutes}">Use the Clock app timer</a>
     </div>` : '';
 
   app.innerHTML = `
-    <button class="back-btn cook-exit-btn">&larr; Exit</button>
+    <button class="back-btn cook-exit-btn">Exit</button>
     <div class="cook-progress">Step ${idx + 1} of ${total}</div>
     <div class="cook-step-text">${stepData.text}</div>
     ${timerHTML}
@@ -955,7 +980,7 @@ function openAddChoice() {
 
 function renderAddChoice(app) {
   app.innerHTML = `
-    <button class="back-btn">&larr; Cancel</button>
+    <button class="back-btn">Cancel</button>
     <h2 class="detail-title">Add Recipe</h2>
     <p class="choice-subtitle">How do you want to add it?</p>
     <button class="choice-card" id="choice-full">
@@ -980,7 +1005,7 @@ function openPasteForm() {
 
 function renderPasteForm(app) {
   app.innerHTML = `
-    <button class="back-btn">&larr; Cancel</button>
+    <button class="back-btn">Cancel</button>
     <h2 class="detail-title">Paste Recipe Details</h2>
 
     <label class="form-label">Title</label>
@@ -992,7 +1017,7 @@ function renderPasteForm(app) {
     <label class="form-label">Instructions</label>
     <textarea id="p-instructions" class="paste-box" placeholder="Paste instructions here, one step per line">${state.pasteData.instructionsText}</textarea>
 
-    <button class="save-btn" id="parse-continue-btn">Continue &rarr;</button>
+    <button class="save-btn" id="parse-continue-btn">Continue</button>
   `;
 
   app.querySelector('.back-btn').addEventListener('click', () => { state.view = 'list'; render(); });
@@ -1089,7 +1114,7 @@ function renderAddForm(app) {
     </label>`).join('');
 
   app.innerHTML = `
-    <button class="back-btn">&larr; Cancel</button>
+    <button class="back-btn">Cancel</button>
     <h2 class="detail-title">${state.editingId ? 'Edit Recipe' : 'Add Recipe'}</h2>
 
     <label class="form-label">Photo</label>
