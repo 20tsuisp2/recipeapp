@@ -4,9 +4,39 @@ const SHOPPING_KEY = 'shoppingList';
 const FRIDGE_KEY = 'fridgeItems';
 const EDITED_KEY = 'recipeEdits';
 const FAVORITES_KEY = 'favoriteRecipeIds';
+const COOK_LOG_KEY = 'cookLog';
+const RATINGS_KEY = 'recipeRatings';
 
-const tabNames = { recipes: 'Recipes', fridge: 'Fridge', list: 'List' };
-let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: { favourites: true }, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null };
+const BADGES = [
+  { count: 1, name: 'First Bite' },
+  { count: 5, name: 'Getting Saucy' },
+  { count: 10, name: 'Kitchen Regular' },
+  { count: 15, name: 'Seasoned Cook' },
+  { count: 20, name: 'On a Roll' },
+  { count: 25, name: 'Quarter Century' },
+  { count: 30, name: 'Recipe Regular' },
+  { count: 35, name: 'Flavour Finder' },
+  { count: 40, name: 'Kitchen Confidence' },
+  { count: 45, name: 'Almost Halfway' },
+  { count: 50, name: 'Halfway Hero' },
+  { count: 55, name: 'Cooking Machine' },
+  { count: 60, name: 'Sous Chef Status' },
+  { count: 65, name: 'Two-Thirds There' },
+  { count: 70, name: 'Kitchen Veteran' },
+  { count: 75, name: 'Three-Quarter Legend' },
+  { count: 80, name: 'Nearly There' },
+  { count: 85, name: 'Home Stretch' },
+  { count: 90, name: 'Master in the Making' },
+  { count: 95, name: 'One Step From Greatness' },
+  { count: 100, name: 'Head Chef — Cookbook Conquered' }
+];
+const RATING_CAPTIONS = {
+  low: 'i never want to make this ever again ew coca cola chicken ew',
+  high: 'i could make this dish everyday for the rest of my life'
+};
+
+const tabNames = { recipes: 'Recipes', fridge: 'Fridge', list: 'List', progress: 'Progress' };
+let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: { favourites: true }, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null, ratingRecipeId: null, pendingBadge: null, expandedHistory: false };
 let cookIntervalId = null;
 
 function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
@@ -225,6 +255,78 @@ function getFridgeItems() {
   return seeded;
 }
 function saveFridgeItems(items) { localStorage.setItem(FRIDGE_KEY, JSON.stringify(items)); }
+function getCookLog() {
+  const stored = localStorage.getItem(COOK_LOG_KEY);
+  return stored ? JSON.parse(stored) : [];
+}
+function saveCookLog(log) { localStorage.setItem(COOK_LOG_KEY, JSON.stringify(log)); }
+function hasCookedBefore(recipeId) { return getCookLog().some(e => e.recipeId === recipeId); }
+function logCook(recipeId) {
+  const log = getCookLog();
+  log.push({ recipeId, timestamp: new Date().toISOString() });
+  saveCookLog(log);
+}
+function getRatings() {
+  const stored = localStorage.getItem(RATINGS_KEY);
+  return stored ? JSON.parse(stored) : {};
+}
+function saveRating(recipeId, stars) {
+  const ratings = getRatings();
+  ratings[recipeId] = stars;
+  localStorage.setItem(RATINGS_KEY, JSON.stringify(ratings));
+}
+function checkNewBadge(totalCount) {
+  return BADGES.find(b => b.count === totalCount) || null;
+}
+function getWeekKey(dateInput) {
+  const d = new Date(dateInput);
+  const day = (d.getDay() + 6) % 7; // Mon=0 ... Sun=6
+  d.setDate(d.getDate() - day);
+  d.setHours(0, 0, 0, 0);
+  return d.toISOString().slice(0, 10);
+}
+function getCurrentStreak() {
+  const log = getCookLog();
+  if (!log.length) return 0;
+  const weeksCooked = new Set(log.map(e => getWeekKey(e.timestamp)));
+  const cursor = new Date();
+  if (!weeksCooked.has(getWeekKey(cursor))) cursor.setDate(cursor.getDate() - 7);
+  let streak = 0;
+  while (weeksCooked.has(getWeekKey(cursor))) {
+    streak++;
+    cursor.setDate(cursor.getDate() - 7);
+  }
+  return streak;
+}
+function finishCooking(recipe) {
+  const firstTime = !hasCookedBefore(recipe.id);
+  logCook(recipe.id);
+  const newBadge = checkNewBadge(getCookLog().length);
+  state.pendingBadge = newBadge;
+  if (firstTime) {
+    state.ratingRecipeId = recipe.id;
+    state.view = 'rate';
+  } else if (newBadge) {
+    state.openId = recipe.id;
+    state.view = 'badgeUnlock';
+  } else {
+    state.openId = recipe.id;
+    state.view = 'detail';
+  }
+  render();
+}
+function pickSurpriseRecipe() {
+  const all = getAllRecipes();
+  if (!all.length) return null;
+  const cookedIds = new Set(getCookLog().map(e => e.recipeId));
+  let pool = all.filter(r => !cookedIds.has(r.id));
+  if (!pool.length) {
+    const ratings = getRatings();
+    pool = all.filter(r => (ratings[r.id] || 0) >= 3);
+  }
+  if (!pool.length) pool = all;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
 function getFavoriteIds() {
   const stored = localStorage.getItem(FAVORITES_KEY);
   if (stored) return JSON.parse(stored);
@@ -268,12 +370,15 @@ function render() {
   const addBtn = document.querySelector('.add-btn');
   if (addBtn) addBtn.style.display = (state.view === 'list') ? '' : 'none';
   if (state.view === 'cook') { renderCookMode(app); return; }
+  if (state.view === 'rate') { renderRatingScreen(app); return; }
+  if (state.view === 'badgeUnlock') { renderBadgeUnlock(app); return; }
   if (state.view === 'detail') { renderDetail(app); return; }
   if (state.view === 'addChoice') { renderAddChoice(app); return; }
   if (state.view === 'paste') { renderPasteForm(app); return; }
   if (state.view === 'add') { renderAddForm(app); return; }
   if (state.section === 'list') { renderShoppingList(app); return; }
   if (state.section === 'fridge') { renderFridgeTab(app); return; }
+  if (state.section === 'progress') { renderProgressTab(app); return; }
   renderRecipesTab(app);
 }
 
@@ -318,6 +423,7 @@ function renderRecipesTab(app) {
     const cards = results.map(r => recipeCardHTML(r, { badgeText: (r.folders || []).map(folderLabel).join(', ') })).join('');
     bodyHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="cards">${cards || '<p class="empty">No recipes match your search.</p>'}</div>`;
   } else {
+    const surpriseHTML = `<div class="surprise-header"><button class="surprise-me-btn">🎲 Surprise Me</button></div>`;
     const controlsHTML = `<div class="list-controls"><button class="export-btn">Export</button><button class="select-toggle">${state.selectMode ? 'Cancel' : 'Select'}</button></div>`;
     const favoriteIds = getFavoriteIds();
     const displaySections = [
@@ -343,7 +449,7 @@ function renderRecipesTab(app) {
     }).join('');
     const selectBarHTML = (state.selectMode && state.selected.length > 0)
       ? `<div class="select-bar"><span>${state.selected.length} selected</span><button class="add-to-list-btn">Add to list</button></div>` : '';
-    bodyHTML = `<div class="section-tabs">${tabsHTML()}</div>${controlsHTML}${foldersHTML}${selectBarHTML}`;
+    bodyHTML = `<div class="section-tabs">${tabsHTML()}</div>${surpriseHTML}${controlsHTML}${foldersHTML}${selectBarHTML}`;
   }
 
   app.innerHTML = searchBarHTML + bodyHTML;
@@ -376,6 +482,13 @@ function renderRecipesTab(app) {
     }
     const exportBtn = document.querySelector('.export-btn');
     if (exportBtn) exportBtn.addEventListener('click', () => exportRecipeData());
+    const surpriseBtn = document.querySelector('.surprise-me-btn');
+    if (surpriseBtn) {
+      surpriseBtn.addEventListener('click', () => {
+        const pick = pickSurpriseRecipe();
+        if (pick) { state.openId = pick.id; state.view = 'detail'; state.multiplier = 1; render(); }
+      });
+    }
   }
 
   bindRecipeCardClicks();
@@ -408,8 +521,10 @@ function renderShoppingList(app) {
       <span class="list-delete">&times;</span>
     </div>`).join('') : '<p class="empty">Your list is empty. Select recipes on the Recipes tab and tap "Add to list", or use the + button to add an item.</p>';
   const clearBtn = items.length ? '<button class="clear-list-btn">Clear list</button>' : '';
+  const checkedCount = items.filter(i => i.checked).length;
+  const sendToFridgeBtn = checkedCount > 0 ? `<button class="send-to-fridge-btn">Send ${checkedCount} bought item${checkedCount === 1 ? '' : 's'} to Fridge</button>` : '';
 
-  app.innerHTML = `<div class="section-tabs">${tabsHTML()}</div><div id="shopping-list">${itemsHTML}</div>${clearBtn}`;
+  app.innerHTML = `<div class="section-tabs">${tabsHTML()}</div>${sendToFridgeBtn}<div id="shopping-list">${itemsHTML}</div>${clearBtn}`;
 
   bindSharedTabClicks(true);
   document.querySelectorAll('.list-check').forEach(el => {
@@ -443,6 +558,18 @@ function renderShoppingList(app) {
   if (clearListBtn) {
     clearListBtn.addEventListener('click', () => {
       if (confirm('Clear the whole list?')) { saveShoppingList([]); render(); }
+    });
+  }
+  const sendToFridgeBtnEl = document.querySelector('.send-to-fridge-btn');
+  if (sendToFridgeBtnEl) {
+    sendToFridgeBtnEl.addEventListener('click', () => {
+      const shopping = getShoppingList();
+      const checked = shopping.filter(i => i.checked);
+      const fridge = getFridgeItems();
+      checked.forEach(i => fridge.push({ id: 'fridge-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: i.text, checked: false }));
+      saveFridgeItems(fridge);
+      saveShoppingList(shopping.filter(i => !i.checked));
+      render();
     });
   }
 }
@@ -579,6 +706,7 @@ function renderDetail(app) {
     ${macrosHTML}
     ${notesHTML}
     <button class="edit-btn">Edit recipe</button>
+    <button class="cooked-recipe-btn">Cooked Recipe</button>
     <button class="delete-btn">Delete recipe</button>
   `;
 
@@ -600,6 +728,7 @@ function renderDetail(app) {
     }
   });
   app.querySelector('.edit-btn').addEventListener('click', () => { openEditForm(recipe); });
+  app.querySelector('.cooked-recipe-btn').addEventListener('click', () => { finishCooking(recipe); });
   const startCookingBtn = app.querySelector('.start-cooking-btn');
   if (startCookingBtn) startCookingBtn.addEventListener('click', () => { openCookMode(recipe); });
   bindFavoriteStars();
@@ -702,17 +831,121 @@ function renderCookMode(app) {
   app.querySelector('.cook-next-btn').addEventListener('click', () => {
     resetStepTimer();
     if (idx === total - 1) {
-      state.view = 'detail'; state.openId = state.cookRecipeId;
+      finishCooking(recipe);
     } else {
       state.cookStep = idx + 1;
+      render();
     }
-    render();
   });
 
   const toggleBtn = app.querySelector('.timer-toggle-btn');
   if (toggleBtn) toggleBtn.addEventListener('click', () => toggleCookTimer(stepData));
   const resetBtn = app.querySelector('.timer-reset-btn');
   if (resetBtn) resetBtn.addEventListener('click', () => { resetStepTimer(); render(); });
+}
+
+function renderRatingScreen(app) {
+  const recipe = findRecipeById(state.ratingRecipeId);
+  const title = recipe ? recipe.title : 'this dish';
+
+  app.innerHTML = `
+    <h2 class="detail-title rating-heading">How was ${title}?</h2>
+    <div class="rating-row">
+      <span class="rating-caption rating-caption-low">${RATING_CAPTIONS.low}</span>
+      <div class="rating-stars-arc">
+        ${[1, 2, 3, 4, 5].map((n, i) => `<span class="rating-star" data-star="${n}" style="transform: translateY(${[16, 6, 0, 6, 16][i]}px)">☆</span>`).join('')}
+      </div>
+      <span class="rating-caption rating-caption-high">${RATING_CAPTIONS.high}</span>
+    </div>
+    <button class="skip-rating-btn">Skip</button>
+  `;
+
+  function finishRating(stars) {
+    if (stars) saveRating(state.ratingRecipeId, stars);
+    const recipeId = state.ratingRecipeId;
+    state.ratingRecipeId = null;
+    if (state.pendingBadge) {
+      state.openId = recipeId;
+      state.view = 'badgeUnlock';
+    } else {
+      state.openId = recipeId;
+      state.view = 'detail';
+    }
+    render();
+  }
+
+  app.querySelectorAll('.rating-star').forEach(star => {
+    star.addEventListener('click', () => finishRating(Number(star.dataset.star)));
+  });
+  app.querySelector('.skip-rating-btn').addEventListener('click', () => finishRating(null));
+}
+
+function renderBadgeUnlock(app) {
+  const badge = state.pendingBadge;
+  app.innerHTML = `
+    <div class="badge-unlock-screen">
+      <div class="badge-unlock-emoji">🏅</div>
+      <h2 class="detail-title">Badge Unlocked!</h2>
+      <div class="badge-unlock-name">${badge ? badge.name : ''}</div>
+      <div class="badge-unlock-sub">${badge ? badge.count : ''} recipes cooked</div>
+      <button class="save-btn badge-continue-btn">Continue</button>
+    </div>
+  `;
+  app.querySelector('.badge-continue-btn').addEventListener('click', () => {
+    state.pendingBadge = null;
+    state.view = 'detail';
+    render();
+  });
+}
+
+function renderProgressTab(app) {
+  const log = getCookLog();
+  const total = log.length;
+  const streak = getCurrentStreak();
+  const ratings = getRatings();
+
+  const badgesHTML = BADGES.map(b => {
+    const unlocked = total >= b.count;
+    return `<div class="badge-chip ${unlocked ? 'unlocked' : 'locked'}">
+      <div class="badge-chip-icon">${unlocked ? '🏅' : '🔒'}</div>
+      <div class="badge-chip-name">${b.name}</div>
+      <div class="badge-chip-count">${b.count}</div>
+    </div>`;
+  }).join('');
+
+  const sortedLog = [...log].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+  const historyRows = sortedLog.map(entry => {
+    const recipe = findRecipeById(entry.recipeId);
+    const title = recipe ? recipe.title : '(deleted recipe)';
+    const date = new Date(entry.timestamp);
+    const dateStr = date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    const stars = ratings[entry.recipeId] ? '★'.repeat(ratings[entry.recipeId]) : '';
+    return `<div class="history-row"><span class="history-title">${title}</span><span class="history-date">${dateStr}</span>${stars ? `<span class="history-stars">${stars}</span>` : ''}</div>`;
+  }).join('');
+
+  app.innerHTML = `
+    <div class="section-tabs">${tabsHTML()}</div>
+    <div class="progress-summary">
+      <div class="progress-stat"><strong>${total}</strong><span>Recipes Cooked</span></div>
+      <div class="progress-stat"><strong>${streak}</strong><span>Week Streak</span></div>
+    </div>
+    <h4 class="section-label">Badges</h4>
+    <div class="badges-grid">${badgesHTML}</div>
+    <div class="folder-section">
+      <button class="folder-header" id="history-toggle">
+        <span class="folder-chevron">${state.expandedHistory ? '▾' : '▸'}</span>
+        <span class="folder-label">Cooking History</span>
+        <span class="folder-count">${total}</span>
+      </button>
+      ${state.expandedHistory ? `<div class="folder-cards history-list">${historyRows || '<p class="empty">Nothing cooked yet.</p>'}</div>` : ''}
+    </div>
+  `;
+
+  bindSharedTabClicks(true);
+  document.getElementById('history-toggle').addEventListener('click', () => {
+    state.expandedHistory = !state.expandedHistory;
+    render();
+  });
 }
 
 function openAddChoice() {
