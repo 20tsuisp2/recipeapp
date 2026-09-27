@@ -8,35 +8,188 @@ const COOK_LOG_KEY = 'cookLog';
 const RATINGS_KEY = 'recipeRatings';
 
 const BADGES = [
-  { count: 1, name: 'First Bite' },
-  { count: 5, name: 'Getting Saucy' },
-  { count: 10, name: 'Kitchen Regular' },
-  { count: 15, name: 'Seasoned Cook' },
-  { count: 20, name: 'On a Roll' },
-  { count: 25, name: 'Quarter Century' },
-  { count: 30, name: 'Recipe Regular' },
-  { count: 35, name: 'Flavour Finder' },
-  { count: 40, name: 'Kitchen Confidence' },
-  { count: 45, name: 'Almost Halfway' },
-  { count: 50, name: 'Halfway Hero' },
-  { count: 55, name: 'Cooking Machine' },
-  { count: 60, name: 'Sous Chef Status' },
-  { count: 65, name: 'Two-Thirds There' },
-  { count: 70, name: 'Kitchen Veteran' },
-  { count: 75, name: 'Three-Quarter Legend' },
-  { count: 80, name: 'Nearly There' },
-  { count: 85, name: 'Home Stretch' },
-  { count: 90, name: 'Master in the Making' },
-  { count: 95, name: 'One Step From Greatness' },
-  { count: 100, name: 'Head Chef — Cookbook Conquered' }
+  { count: 1, name: 'First Bite', image: 'badges/badge-01.webp' },
+  { count: 5, name: 'Getting Saucy', image: 'badges/badge-05.webp' },
+  { count: 10, name: 'Kitchen Regular', image: 'badges/badge-10.webp' },
+  { count: 15, name: 'Seasoned Cook', image: 'badges/badge-15.webp' },
+  { count: 20, name: 'On a Roll', image: 'badges/badge-20.webp' },
+  { count: 25, name: 'Quarter Century', image: 'badges/badge-25.webp' },
+  { count: 30, name: 'Recipe Regular', image: 'badges/badge-30.webp' },
+  { count: 35, name: 'Flavour Finder', image: 'badges/badge-35.webp' },
+  { count: 40, name: 'Kitchen Confidence', image: 'badges/badge-40.webp' },
+  { count: 45, name: 'Almost Halfway', image: 'badges/badge-45.webp' },
+  { count: 50, name: 'Halfway Hero', image: 'badges/badge-50.webp' },
+  { count: 55, name: 'Cooking Machine', image: 'badges/badge-55.webp' },
+  { count: 60, name: 'Sous Chef Status', image: 'badges/badge-60.webp' },
+  { count: 65, name: 'Two-Thirds There', image: 'badges/badge-65.webp' },
+  { count: 70, name: 'Kitchen Veteran', image: 'badges/badge-70.webp' },
+  { count: 75, name: 'Three-Quarter Legend', image: 'badges/badge-75.webp' },
+  { count: 80, name: 'Nearly There', image: 'badges/badge-80.webp' },
+  { count: 85, name: 'Home Stretch', image: 'badges/badge-85.webp' },
+  { count: 90, name: 'Master in the Making', image: 'badges/badge-90.webp' },
+  { count: 95, name: 'One Step From Greatness', image: 'badges/badge-95.webp' },
+  { count: 100, name: 'Head Chef — Cookbook Conquered', image: 'badges/badge-100.webp' }
 ];
 const RATING_CAPTIONS = {
   low: 'i never want to make this ever again ew coca cola chicken ew',
   high: 'i could make this dish everyday for the rest of my life'
 };
 
+const SETTINGS_KEY = 'appSettings';
+const THEME_PRESETS = [
+  { id: 'teal', name: 'Teal & Tangerine', colors: { bg: '#06232B', raised: '#0B3340', primary: '#FF7A2F', accent: '#2FD9C5', ink: '#EAF6F5' } },
+  { id: 'onyx', name: 'Onyx & Ultraviolet', colors: { bg: '#0A0A0F', raised: '#15151F', primary: '#7C4DFF', accent: '#00E5A0', ink: '#F0EFF7' } },
+  { id: 'ochre', name: 'Ochre & Aubergine', colors: { bg: '#241428', raised: '#33203A', primary: '#E8A723', accent: '#C98BDB', ink: '#F6ECDF' } },
+  { id: 'ink', name: 'Ink & Pistachio', colors: { bg: '#0A1014', raised: '#131C22', primary: '#FF5B2E', accent: '#A8D84E', ink: '#EFF3EE' } }
+];
+const COLOR_SLOTS = [
+  { key: 'bg', label: 'Background' },
+  { key: 'raised', label: 'Cards' },
+  { key: 'primary', label: 'Primary' },
+  { key: 'accent', label: 'Accent' },
+  { key: 'ink', label: 'Text' }
+];
+function gf(family, spec) { return family.replace(/ /g, '+') + (spec ? ':' + spec : ''); }
+const HEADER_FONTS = [
+  { name: 'Bodoni Moda', q: gf('Bodoni Moda', 'ital,opsz,wght@0,6..96,400..900;1,6..96,400..700'), fb: 'Georgia, serif' },
+  { name: 'Fraunces', q: gf('Fraunces', 'ital,opsz,wght@0,9..144,400..900;1,9..144,400..700'), fb: 'Georgia, serif' },
+  { name: 'Anton', q: gf('Anton'), fb: 'Impact, sans-serif' },
+  { name: 'Playfair Display', q: gf('Playfair Display', 'ital,wght@0,400..900;1,400..900'), fb: 'Georgia, serif' },
+  { name: 'Abril Fatface', q: gf('Abril Fatface'), fb: 'Georgia, serif' },
+  { name: 'Bebas Neue', q: gf('Bebas Neue'), fb: 'Impact, sans-serif' },
+  { name: 'Righteous', q: gf('Righteous'), fb: 'system-ui, sans-serif' },
+  { name: 'Unbounded', q: gf('Unbounded', 'wght@400..900'), fb: 'system-ui, sans-serif' },
+  { name: 'Lobster', q: gf('Lobster'), fb: 'cursive' },
+  { name: 'Passion One', q: gf('Passion One', 'wght@400;700;900'), fb: 'system-ui, sans-serif' }
+];
+const BODY_FONTS = [
+  { name: 'Archivo', q: gf('Archivo', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Work Sans', q: gf('Work Sans', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Inter', q: gf('Inter', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Nunito Sans', q: gf('Nunito Sans', 'wght@400;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Karla', q: gf('Karla', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Mulish', q: gf('Mulish', 'wght@400;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Source Sans 3', q: gf('Source Sans 3', 'wght@400;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Rubik', q: gf('Rubik', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Lato', q: gf('Lato', 'wght@400;700'), fb: 'system-ui, sans-serif' },
+  { name: 'IBM Plex Sans', q: gf('IBM Plex Sans', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' }
+];
+const COOK_FONTS = [
+  { name: 'Atkinson Hyperlegible', q: gf('Atkinson Hyperlegible', 'wght@400;700'), fb: 'system-ui, sans-serif' },
+  BODY_FONTS[0],
+  BODY_FONTS[2],
+  BODY_FONTS[1],
+  { name: 'Lexend', q: gf('Lexend', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  { name: 'Public Sans', q: gf('Public Sans', 'wght@400;500;600;700'), fb: 'system-ui, sans-serif' },
+  BODY_FONTS[3],
+  BODY_FONTS[6],
+  BODY_FONTS[4],
+  BODY_FONTS[9]
+];
+const DEFAULT_SETTINGS = {
+  themeId: 'teal',
+  custom: { ...THEME_PRESETS[0].colors },
+  header: 'Bodoni Moda',
+  body: 'Archivo',
+  cook: 'Atkinson Hyperlegible'
+};
+
+function getSettings() {
+  let base = null;
+  const stored = localStorage.getItem(SETTINGS_KEY);
+  if (stored) { try { base = JSON.parse(stored); } catch (e) { base = null; } }
+  if (!base && typeof defaultSettings !== 'undefined' && defaultSettings) base = defaultSettings;
+  const s = { ...DEFAULT_SETTINGS, ...(base || {}) };
+  s.custom = { ...DEFAULT_SETTINGS.custom, ...((base && base.custom) || {}) };
+  return s;
+}
+function saveSettings(s) { localStorage.setItem(SETTINGS_KEY, JSON.stringify(s)); }
+
+function hexToRgb(hex) {
+  let h = String(hex).replace('#', '');
+  if (h.length === 3) h = h.split('').map(c => c + c).join('');
+  const n = parseInt(h, 16) || 0;
+  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+}
+function rgbToHex(rgb) {
+  return '#' + rgb.map(v => Math.round(Math.max(0, Math.min(255, v))).toString(16).padStart(2, '0')).join('');
+}
+function mixHex(a, b, t) {
+  const A = hexToRgb(a), B = hexToRgb(b);
+  return rgbToHex(A.map((v, i) => v + (B[i] - v) * t));
+}
+function rgbaOf(hex, alpha) { const [r, g, b] = hexToRgb(hex); return `rgba(${r},${g},${b},${alpha})`; }
+function luminance(hex) {
+  const c = hexToRgb(hex).map(v => { v /= 255; return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); });
+  return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2];
+}
+function contrastRatio(a, b) {
+  const L1 = luminance(a), L2 = luminance(b);
+  return (Math.max(L1, L2) + 0.05) / (Math.min(L1, L2) + 0.05);
+}
+function readableOn(fill, themeOptions) {
+  const themed = themeOptions.reduce((best, o) => contrastRatio(fill, o) > contrastRatio(fill, best) ? o : best);
+  if (contrastRatio(fill, themed) >= 4.5) return themed;
+  return contrastRatio(fill, '#FFFFFF') >= contrastRatio(fill, '#111111') ? '#FFFFFF' : '#111111';
+}
+function activeColors(s) {
+  const preset = THEME_PRESETS.find(t => t.id === s.themeId);
+  return preset ? preset.colors : s.custom;
+}
+function applyTheme(s) {
+  const c = activeColors(s);
+  const alt = mixHex(c.accent, c.bg, 0.55);
+  const vars = {
+    '--bg': c.bg, '--raised': c.raised, '--primary': c.primary, '--accent': c.accent, '--ink': c.ink,
+    '--line': mixHex(c.raised, c.ink, 0.14),
+    '--dim': mixHex(c.ink, c.bg, 0.35),
+    '--placeholder': mixHex(c.ink, c.bg, 0.55),
+    '--primary-lit': mixHex(c.primary, '#FFFFFF', 0.15),
+    '--on-primary': readableOn(c.primary, [c.bg, c.ink]),
+    '--on-accent': readableOn(c.accent, [c.bg, c.ink]),
+    '--alt': alt,
+    '--on-alt': readableOn(alt, [c.bg, c.ink]),
+    '--head-top': mixHex(c.raised, c.bg, 0.5),
+    '--scrim-0': rgbaOf(c.bg, 0.12),
+    '--scrim-1': rgbaOf(c.bg, 0.93),
+    '--glass': rgbaOf(c.bg, 0.58),
+    '--ink-soft': rgbaOf(c.ink, 0.78),
+    '--ink-faint': rgbaOf(c.ink, 0.3)
+  };
+  const root = document.documentElement.style;
+  Object.keys(vars).forEach(k => root.setProperty(k, vars[k]));
+  const meta = document.querySelector('meta[name="theme-color"]');
+  if (meta) meta.setAttribute('content', c.bg);
+}
+function fontByName(list, name) { return list.find(f => f.name === name) || list[0]; }
+function fontStack(f) { return `'${f.name}', ${f.fb}`; }
+function ensureFontLink(id, fonts) {
+  const qs = [...new Set(fonts.map(f => f.q))];
+  const href = 'https://fonts.googleapis.com/css2?' + qs.map(q => 'family=' + q).join('&') + '&display=swap';
+  let link = document.getElementById(id);
+  if (!link) {
+    link = document.createElement('link');
+    link.id = id;
+    link.rel = 'stylesheet';
+    document.head.appendChild(link);
+  }
+  if (link.getAttribute('href') !== href) link.setAttribute('href', href);
+}
+function applyFonts(s) {
+  const h = fontByName(HEADER_FONTS, s.header);
+  const b = fontByName(BODY_FONTS, s.body);
+  const k = fontByName(COOK_FONTS, s.cook);
+  ensureFontLink('font-active', [h, b, k]);
+  const root = document.documentElement.style;
+  root.setProperty('--display', fontStack(h));
+  root.setProperty('--body', fontStack(b));
+  root.setProperty('--cook', fontStack(k));
+}
+function applySettings() { const s = getSettings(); applyTheme(s); applyFonts(s); }
+applySettings();
+
 const tabNames = { recipes: 'Recipes', fridge: 'Fridge', list: 'List', progress: 'Progress' };
-let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: { favourites: true }, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, fridgeResults: null, ratingRecipeId: null, pendingBadge: null, expandedHistory: false };
+let state = { section: 'recipes', view: 'list', openId: null, multiplier: 1, query: '', selectMode: false, selected: [], expandedFolders: { favourites: true }, cookRecipeId: null, cookStep: 0, cookTimerRemaining: null, cookTimerRunning: false, cookDrawerOpen: false, fridgeResults: null, ratingRecipeId: null, pendingBadge: null, expandedHistory: false };
 let cookIntervalId = null;
 
 function escapeAttr(str) { return String(str).replace(/"/g, '&quot;'); }
@@ -164,7 +317,30 @@ function totalTimeLabel(r) {
 function tileTone(id) {
   let sum = 0;
   for (let i = 0; i < String(id).length; i++) sum += String(id).charCodeAt(i);
-  return ['tone-tomato', 'tone-basil'][sum % 2];
+  return ['tone-primary', 'tone-alt'][sum % 2];
+}
+function scaledIngredientText(ing, multiplier) {
+  const scaled = ing.amount * multiplier;
+  const amt = Number.isInteger(scaled) ? scaled : Math.round(scaled * 100) / 100;
+  return `${amt}${ing.unit} ${ing.name}`;
+}
+const STEP_ALL_HINTS = ['all ingredients', 'all the ingredients', 'everything', 'remaining ingredients', 'all of the ingredients'];
+function matchIngredientsForStep(recipe, stepText) {
+  const ingredients = recipe.ingredients || [];
+  if (!ingredients.length || !stepText) return [];
+  const text = ' ' + stepText.toLowerCase().replace(/[^a-z0-9\s]/g, ' ').replace(/\s+/g, ' ') + ' ';
+  if (STEP_ALL_HINTS.some(h => text.includes(h))) return ingredients;
+  const hit = (needle) => needle.length > 2 && text.includes(' ' + needle + ' ');
+  return ingredients.filter(ing => {
+    const head = String(ing.name).split(',')[0].toLowerCase().replace(/[^a-z0-9\s]/g, ' ').trim();
+    if (!head) return false;
+    if (text.includes(' ' + head + ' ')) return true;
+    const words = head.split(/\s+/).filter(w => w.length > 2);
+    return words.some(w => {
+      const singular = w.endsWith('es') ? w.slice(0, -2) : (w.endsWith('s') ? w.slice(0, -1) : w);
+      return hit(w) || hit(singular) || hit(singular + 's') || hit(singular + 'es');
+    });
+  });
 }
 function recipeCardHTML(r, opts = {}) {
   const img = r.image || r.photo;
@@ -233,6 +409,7 @@ function exportRecipeData() {
     recipeEdits: getRecipeEdits(),
     deletedRecipeIds: getDeletedIds(),
     favoriteRecipeIds: getFavoriteIds(),
+    settings: getSettings(),
     fridgeItems: getFridgeItems()
   };
   const json = JSON.stringify(data, null, 2);
@@ -391,6 +568,7 @@ function render() {
   const app = document.getElementById('app');
   const addBtn = document.querySelector('.add-btn');
   if (addBtn) addBtn.style.display = (state.view === 'list') ? '' : 'none';
+  if (state.view === 'settings') { renderSettings(app); return; }
   if (state.view === 'cook') { renderCookMode(app); return; }
   if (state.view === 'rate') { renderRatingScreen(app); return; }
   if (state.view === 'badgeUnlock') { renderBadgeUnlock(app); return; }
@@ -685,9 +863,7 @@ function renderDetail(app) {
 
   const ingredientsHTML = (recipe.ingredients && recipe.ingredients.length)
     ? `<ul class="ingredient-list">${recipe.ingredients.map(ing => {
-        const scaled = ing.amount * state.multiplier;
-        const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 100) / 100;
-        return `<li>${displayAmount}${ing.unit} ${ing.name}</li>`;
+        return `<li>${scaledIngredientText(ing, state.multiplier)}</li>`;
       }).join('')}</ul>`
     : `<p class="empty">No ingredients added yet.</p>`;
 
@@ -760,9 +936,7 @@ function renderDetail(app) {
   app.querySelector('.add-to-list-detail-btn').addEventListener('click', (e) => {
     const items = getShoppingList();
     (recipe.ingredients || []).forEach(ing => {
-      const scaled = ing.amount * state.multiplier;
-      const displayAmount = Number.isInteger(scaled) ? scaled : Math.round(scaled * 100) / 100;
-      items.push({ id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: `${displayAmount}${ing.unit} ${ing.name}`, checked: false });
+      items.push({ id: 'item-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7), text: scaledIngredientText(ing, state.multiplier), checked: false });
     });
     saveShoppingList(items);
     const btn = e.target;
@@ -776,6 +950,7 @@ function openCookMode(recipe) {
   state.view = 'cook';
   state.cookRecipeId = recipe.id;
   state.cookStep = 0;
+  state.cookDrawerOpen = false;
   resetStepTimer();
   render();
 }
@@ -831,16 +1006,36 @@ function renderCookMode(app) {
       <a class="real-timer-link" href="shortcuts://run-shortcut?name=${encodeURIComponent('Start Timer')}&input=text&text=${stepData.timerMinutes}">Use the Clock app timer</a>
     </div>` : '';
 
+  const stepIngredients = matchIngredientsForStep(recipe, stepData.text);
+  const chipsHTML = stepIngredients.length
+    ? `<div class="step-chips">${stepIngredients.map(ing => `<span class="step-chip">${scaledIngredientText(ing, state.multiplier)}</span>`).join('')}</div>`
+    : '';
+
+  const allIngredients = recipe.ingredients || [];
+  const drawerHTML = allIngredients.length ? `
+    <div class="cook-drawer ${state.cookDrawerOpen ? 'open' : ''}">
+      <button class="cook-drawer-toggle">${state.cookDrawerOpen ? 'Hide ingredients' : 'All ingredients'}</button>
+      ${state.cookDrawerOpen ? `<div class="cook-drawer-body"><ul class="ingredient-list">${allIngredients.map(ing => {
+        const used = stepIngredients.includes(ing);
+        return `<li class="${used ? 'used-now' : ''}">${scaledIngredientText(ing, state.multiplier)}</li>`;
+      }).join('')}</ul></div>` : ''}
+    </div>` : '';
+
   app.innerHTML = `
     <button class="back-btn cook-exit-btn">Exit</button>
     <div class="cook-progress">Step ${idx + 1} of ${total}</div>
     <div class="cook-step-text">${stepData.text}</div>
+    ${chipsHTML}
     ${timerHTML}
     <div class="cook-nav">
       <button class="cook-back-btn" ${idx === 0 ? 'disabled' : ''}>Back</button>
       <button class="cook-next-btn">${idx === total - 1 ? 'Finish' : 'Next'}</button>
     </div>
+    ${drawerHTML}
   `;
+
+  const drawerToggle = app.querySelector('.cook-drawer-toggle');
+  if (drawerToggle) drawerToggle.addEventListener('click', () => { state.cookDrawerOpen = !state.cookDrawerOpen; render(); });
 
   app.querySelector('.cook-exit-btn').addEventListener('click', () => {
     resetStepTimer();
@@ -909,7 +1104,7 @@ function renderBadgeUnlock(app) {
   const badge = state.pendingBadge;
   app.innerHTML = `
     <div class="badge-unlock-screen">
-      <div class="badge-unlock-emoji">🏅</div>
+      <div class="badge-unlock-emoji">${badge && badge.image ? `<img src="${badge.image}" class="badge-photo-large">` : '🏅'}</div>
       <h2 class="detail-title">Badge Unlocked!</h2>
       <div class="badge-unlock-name">${badge ? badge.name : ''}</div>
       <div class="badge-unlock-sub">${badge ? badge.count : ''} recipes cooked</div>
@@ -932,7 +1127,7 @@ function renderProgressTab(app) {
   const badgesHTML = BADGES.map(b => {
     const unlocked = total >= b.count;
     return `<div class="badge-chip ${unlocked ? 'unlocked' : 'locked'}">
-      <div class="badge-chip-icon">${unlocked ? '🏅' : '🔒'}</div>
+      <div class="badge-chip-icon">${unlocked ? `<img src="${b.image}" class="badge-photo">` : '🔒'}</div>
       <div class="badge-chip-name">${b.name}</div>
       <div class="badge-chip-count">${b.count}</div>
     </div>`;
@@ -1284,7 +1479,119 @@ function addShoppingItem() {
   render();
 }
 
+function openSettings() {
+  if (state.view !== 'settings') state.settingsReturnView = state.view;
+  state.view = 'settings';
+  render();
+  try { window.scrollTo(0, 0); } catch (e) { /* ignore */ }
+}
+
+function renderSettings(app) {
+  const s = getSettings();
+  ensureFontLink('font-all', [...HEADER_FONTS, ...BODY_FONTS, ...COOK_FONTS]);
+  const live = activeColors(s);
+
+  const presetsHTML = THEME_PRESETS.map(p => `
+    <button class="theme-option ${s.themeId === p.id ? 'selected' : ''}" data-theme="${p.id}">
+      <span class="theme-name">${p.name}</span>
+      <span class="theme-swatches">${COLOR_SLOTS.map(slot => `<span style="background:${p.colors[slot.key]}"></span>`).join('')}</span>
+    </button>`).join('');
+
+  const customHTML = `
+    <div class="theme-option custom ${s.themeId === 'custom' ? 'selected' : ''}">
+      <button class="theme-name theme-name-btn" data-theme="custom">Custom</button>
+      <span class="theme-hint">Tap any colour to change it. Starts from whichever theme is on.</span>
+      <div class="custom-swatches">
+        ${COLOR_SLOTS.map(slot => {
+          const val = s.themeId === 'custom' ? s.custom[slot.key] : live[slot.key];
+          return `<label class="custom-swatch">
+            <span class="custom-swatch-chip" style="background:${val}"><input type="color" data-slot="${slot.key}" value="${val}" aria-label="${slot.label} colour"></span>
+            <span class="custom-swatch-label">${slot.label}</span>
+          </label>`;
+        }).join('')}
+      </div>
+    </div>`;
+
+  const fontGroup = (title, hint, key, list, sample, cls) => `
+    <h4 class="section-label">${title}</h4>
+    <p class="settings-hint">${hint}</p>
+    <div class="font-options">
+      ${list.map(f => `<button class="font-option ${s[key] === f.name ? 'selected' : ''}" data-font-key="${key}" data-font="${f.name}">
+        <span class="font-sample ${cls}" style="font-family:${fontStack(f)}">${sample}</span>
+        <span class="font-name">${f.name}</span>
+      </button>`).join('')}
+    </div>`;
+
+  app.innerHTML = `
+    <button class="back-btn settings-back">Back</button>
+    <h2 class="detail-title settings-title">Customise</h2>
+    <p class="settings-hint">Everything changes live, so what you see here is what you get.</p>
+    <h4 class="section-label">Colours</h4>
+    <div class="theme-options">${presetsHTML}${customHTML}</div>
+    ${fontGroup('Header font', 'Titles, buttons, tabs and numbers.', 'header', HEADER_FONTS, 'Honey Garlic Chicken', 'fs-header')}
+    ${fontGroup('Body font', 'Descriptions, ingredients and notes.', 'body', BODY_FONTS, 'Sticky, sweet and savoury thighs, finished in the pan.', 'fs-body')}
+    ${fontGroup('Cooking text', 'The step you read mid-recipe, with your hands full.', 'cook', COOK_FONTS, 'Pour in the sauce and simmer until it thickens.', 'fs-cook')}
+    <button class="reset-settings-btn">Reset to default</button>
+  `;
+
+  app.querySelector('.settings-back').addEventListener('click', () => {
+    state.view = state.settingsReturnView || 'list';
+    render();
+  });
+
+  app.querySelectorAll('[data-theme]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const next = getSettings();
+      next.themeId = btn.dataset.theme;
+      saveSettings(next);
+      applyTheme(next);
+      render();
+    });
+  });
+
+  app.querySelectorAll('.custom-swatch input[type="color"]').forEach(input => {
+    input.addEventListener('input', () => {
+      const next = getSettings();
+      if (next.themeId !== 'custom') {
+        next.custom = { ...activeColors(next) };
+        next.themeId = 'custom';
+      }
+      next.custom[input.dataset.slot] = input.value;
+      saveSettings(next);
+      applyTheme(next);
+      input.parentElement.style.background = input.value;
+    });
+    input.addEventListener('change', () => render());
+  });
+
+  app.querySelectorAll('.font-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const next = getSettings();
+      next[btn.dataset.fontKey] = btn.dataset.font;
+      saveSettings(next);
+      applyFonts(next);
+      render();
+    });
+  });
+
+  app.querySelector('.reset-settings-btn').addEventListener('click', () => {
+    if (!confirm('Reset colours and fonts back to the default?')) return;
+    localStorage.removeItem(SETTINGS_KEY);
+    applySettings();
+    render();
+  });
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  const headerEl = document.querySelector('header');
+  if (headerEl) {
+    const gear = document.createElement('button');
+    gear.className = 'settings-btn';
+    gear.setAttribute('aria-label', 'Customise colours and fonts');
+    gear.innerHTML = '<svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
+    gear.addEventListener('click', openSettings);
+    headerEl.appendChild(gear);
+  }
   render();
   const btn = document.createElement('button');
   btn.className = 'add-btn';
