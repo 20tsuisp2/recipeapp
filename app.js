@@ -564,7 +564,35 @@ function findMatchingRecipes(selectedTexts) {
   return results;
 }
 
+const scrollMemory = {};
+let lastScreenKey = null;
+function currentScrollY() {
+  return window.pageYOffset || window.scrollY || (document.documentElement && document.documentElement.scrollTop) || 0;
+}
+function setScrollY(y) { try { window.scrollTo(0, y); } catch (e) { /* ignore */ } }
+function screenKey() {
+  if (state.view !== 'list') return 'view:' + state.view;
+  let key = 'list:' + state.section;
+  if (state.section === 'recipes' && state.query.trim()) key += ':search';
+  if (state.section === 'fridge' && state.fridgeResults) key += ':results';
+  return key;
+}
 function render() {
+  const prevKey = lastScreenKey;
+  if (prevKey) scrollMemory[prevKey] = currentScrollY();
+  renderScreen();
+  const key = screenKey();
+  let target = 0;
+  if (key === prevKey) {
+    target = scrollMemory[key] || 0;
+  } else if (prevKey && key.indexOf('list:') === 0 && prevKey.indexOf('list:') !== 0) {
+    target = scrollMemory[key] || 0;
+  }
+  lastScreenKey = key;
+  setScrollY(target);
+  if (typeof requestAnimationFrame === 'function') requestAnimationFrame(() => setScrollY(target));
+}
+function renderScreen() {
   const app = document.getElementById('app');
   const addBtn = document.querySelector('.add-btn');
   if (addBtn) addBtn.style.display = (state.view === 'list') ? '' : 'none';
